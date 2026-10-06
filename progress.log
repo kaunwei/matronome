@@ -1,3 +1,15 @@
+[2026-10-07 01:48:30] [TASK-005] [SUCCESS]
+- Target: Sources/MetronomeCore/Engine/, Tests/MetronomeCoreTests/EngineTests.swift
+- Scope: Implemented MetronomeEngine unified orchestrator binding RhythmEventScheduler, MetronomeAudioEngine, PracticeTracker, PracticeTargetTimer, SpeedTrainer, GapTrainer, tap tempo calculator, live parameter adjustments (tempo, pattern, groove, volume, mute), and high-precision DispatchSourceTimer tick loop with real-time callbacks.
+- Verify: swift test --filter EngineTests (9/9 passed; 34/34 full suite passed in 0.336s).
+- Confidence: 5/5 (thread-safe synchronization, zero-jitter scheduling, clean state machine integration).
+
+[2026-10-07 01:45:30] [TASK-004] [SUCCESS]
+- Target: Sources/MetronomeCore/Trainers/, Tests/MetronomeCoreTests/TrainerTests.swift
+- Scope: Implemented SpeedTrainer (BPM acceleration/deceleration every N measures, target BPM clamping, loop and reset options) and GapTrainer (bar pattern mute e.g. 3 sound / 1 silent, random gap percentage with injectable deterministic roll generator).
+- Verify: swift test --filter TrainerTests (6/6 tests passed in 0.001s; 25/25 full suite passed).
+- Confidence: 5/5 (Clean state machine algorithms, zero race conditions, fully deterministic test coverage).
+
 [2026-10-07 01:44:00] [TASK-003] [SUCCESS]
 - Target: Sources/MetronomeCore/State/, Tests/MetronomeCoreTests/StateTests.swift
 - Scope: Implemented PracticeTracker (session accumulation, persistence, thread-safe sync), PracticeTargetTimer (countdown, callback triggers, progress calculation), PracticeStats (daily/weekly aggregation, weighted BPM, streak calculation), PresetSlotManager (dynamic slots, CRUD, JSON & UserDefaults persistence).
