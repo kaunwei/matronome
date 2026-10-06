@@ -54,12 +54,40 @@ public struct MainMetronomeView: View {
                 
                 // Interactive Measure Pattern Editor
                 MeasurePatternEditorView(viewModel: viewModel)
+                
+                // Collapsible Pro Tools Drawer (Speed Trainer, Gap Trainer, Drone Tuner, Stats)
+                ProToolsDrawerView(viewModel: viewModel)
+                
+                // Sound Settings Button
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        viewModel.isSoundSettingsPresented = true
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "slider.horizontal.3")
+                            Text("Sound & Pitch Settings")
+                        }
+                        .font(.footnote.weight(.medium))
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color(nsColor: .controlBackgroundColor).opacity(0.6))
+                        .cornerRadius(8)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    Spacer()
+                }
+                .padding(.top, 4)
             }
             .padding(24)
             .frame(minWidth: 520, maxWidth: 680)
         }
         .frame(minWidth: 540, minHeight: 700)
         .background(Color(nsColor: .underPageBackgroundColor).opacity(0.5))
+        .sheet(isPresented: $viewModel.isSoundSettingsPresented) {
+            SoundSettingsSheetView(viewModel: viewModel)
+        }
     }
 }
 

@@ -75,6 +75,58 @@ public final class MetronomeViewModel: ObservableObject {
     @Published public var presets: [MetronomePreset] = []
     @Published public var selectedPresetId: UUID? = nil
     
+    // MARK: - Sound & Downbeat Settings State
+    @Published public var downbeatPitchSemitones: Double = 7.0 {
+        didSet {
+            engine.audioEngine.synthesizer.downbeatPitch = DownbeatPitch(semitoneOffset: downbeatPitchSemitones)
+            engine.timbre = timbre // Rebuild cache
+        }
+    }
+    
+    // MARK: - Drone Tuner State
+    @Published public var isDronePlaying: Bool = false
+    @Published public var droneFrequency: Double = 440.0 {
+        didSet {
+            droneReference.baseFrequency = droneFrequency
+        }
+    }
+    @Published public var droneVolume: Float = 0.5 {
+        didSet {
+            droneReference.volume = droneVolume
+        }
+    }
+    private lazy var droneReference: ReferenceDrone = {
+        ReferenceDrone(engine: engine.audioEngine.engine, baseFrequency: droneFrequency)
+    }()
+    
+    // MARK: - Speed Trainer State
+    @Published public var isSpeedTrainerActive: Bool = false {
+        didSet {
+            updateSpeedTrainerInEngine()
+        }
+    }
+    @Published public var speedTrainerStartBPM: Double = 100.0
+    @Published public var speedTrainerTargetBPM: Double = 160.0
+    @Published public var speedTrainerStepBPM: Double = 5.0
+    @Published public var speedTrainerStepMeasures: Int = 4
+    @Published public var speedTrainerLoop: Bool = false
+    
+    // MARK: - Gap Trainer State
+    @Published public var isGapTrainerActive: Bool = false {
+        didSet {
+            updateGapTrainerInEngine()
+        }
+    }
+    @Published public var gapTrainerModeIndex: Int = 0 // 0: Bars, 1: Random
+    @Published public var gapTrainerSoundBars: Int = 3
+    @Published public var gapTrainerSilentBars: Int = 1
+    @Published public var gapTrainerMuteProbability: Double = 0.25
+    
+    // MARK: - UI Presentation State (Pro Tools Drawer & Settings Sheet)
+    @Published public var isToolsDrawerOpen: Bool = false
+    @Published public var selectedToolsTab: ToolsTab = .speedTrainer
+    @Published public var isSoundSettingsPresented: Bool = false
+
     // MARK: - Practice Tracking & Target Timer State
     @Published public var currentPracticeTime: TimeInterval = 0
     @Published public var totalPracticeTime: TimeInterval = 0
@@ -471,5 +523,94 @@ public final class MetronomeViewModel: ObservableObject {
     
     public func toggleTargetTimerExpanded() {
         isTargetTimerExpanded.toggle()
+    }
+    
+    // MARK: - Speed & Gap Trainer Configuration Helpers
+    
+    public func updateSpeedTrainerInEngine() {
+        if isSpeedTrainerActive {
+            let config = SpeedTrainerConfig(
+                startBPM: speedTrainerStartBPM,
+                targetBPM: speedTrainerTargetBPM,
+                stepBPM: speedTrainerStepBPM,
+                stepIntervalMeasures: speedTrainerStepMeasures,
+                loopOnComplete: speedTrainerLoop
+            )
+            engine.speedTrainer = SpeedTrainer(config: config)
+        } else {
+            engine.speedTrainer = nil
+            engine.setTempo(Tempo(bpm: bpm))
+        }
+    }
+    
+    public func updateGapTrainerInEngine() {
+        if isGapTrainerActive {
+            let mode: GapTrainerMode
+            if gapTrainerModeIndex == 0 {
+                mode = .barPattern(soundBars: gapTrainerSoundBars, silentBars: gapTrainerSilentBars)
+            } else {
+                mode = .randomGap(muteProbability: gapTrainerMuteProbability)
+            }
+            engine.gapTrainer = GapTrainer(mode: mode)
+        } else {
+            engine.gapTrainer = nil
+        }
+    }
+    
+    // MARK: - Drone Tuner Controls
+    
+    public func toggleDrone() {
+        if isDronePlaying {
+            stopDrone()
+        } else {
+            startDrone()
+        }
+    }
+    
+    public func startDrone() {
+        do {
+            try droneReference.start()
+            isDronePlaying = true
+        } catch {
+            print("Failed to start Reference Drone: \(error)")
+        }
+    }
+    
+    public func stopDrone() {
+        droneReference.stop()
+        isDronePlaying = false
+    }
+    
+    public func setDronePitch(frequency: Double) {
+        droneFrequency = max(20.0, min(2000.0, frequency))
+    }
+    
+    // MARK: - UI Presentation Controls
+    
+    public func toggleToolsDrawer() {
+        isToolsDrawerOpen.toggle()
+    }
+    
+    public func toggleSoundSettings() {
+        isSoundSettingsPresented.toggle()
+    }
+}
+
+/// Tabs available within the Pro Tools Drawer
+public enum ToolsTab: String, CaseIterable, Identifiable, Sendable {
+    case speedTrainer = "Speed Trainer"
+    case gapTrainer = "Gap Trainer"
+    case droneTuner = "Drone Tuner"
+    case practiceStats = "Practice Stats"
+    
+    public var id: String { rawValue }
+    
+    public var iconName: String {
+        switch self {
+        case .speedTrainer: return "gauge.with.dots.needle.bottom.50percent"
+        case .gapTrainer: return "waveform.slash"
+        case .droneTuner: return "tuningfork"
+        case .practiceStats: return "chart.bar.xaxis"
+        }
     }
 }

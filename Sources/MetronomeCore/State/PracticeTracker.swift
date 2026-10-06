@@ -185,6 +185,11 @@ public final class PracticeTracker: @unchecked Sendable {
         return sessions
     }
 
+    /// Computed practice statistics across recorded history.
+    public var stats: PracticeStats {
+        PracticeStats(sessions: sessionHistory)
+    }
+
     /// Manually injects or records a session (useful for test mocks and sync).
     public func addSession(_ session: PracticeSession) {
         lock.lock()
