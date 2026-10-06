@@ -1,7 +1,7 @@
 import Foundation
 
 /// The rhythmic division of a single beat into smaller equal pulses.
-public enum Subdivision: String, CaseIterable, Equatable, Hashable, Sendable {
+public enum Subdivision: String, CaseIterable, Codable, Equatable, Hashable, Sendable {
     case quarter
     case eighth
     case triplet

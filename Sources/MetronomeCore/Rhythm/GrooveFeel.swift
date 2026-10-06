@@ -1,7 +1,7 @@
 import Foundation
 
 /// The timing displacement applied to subdivisions to produce swing or shuffle feel (50% straight to 75% hard swing).
-public struct GrooveFeel: Equatable, Hashable, Sendable {
+public struct GrooveFeel: Codable, Equatable, Hashable, Sendable {
     public static let minShuffleRatio: Double = 0.50 // Straight (50% / 50%)
     public static let maxShuffleRatio: Double = 0.75 // Hard swing (75% / 25%, e.g. dotted eighth + sixteenth or hard triplet)
     public static let tripletSwingRatio: Double = 2.0 / 3.0 // Standard triplet swing (66.67%)

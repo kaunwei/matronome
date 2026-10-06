@@ -1,7 +1,7 @@
 import Foundation
 
 /// Represents the meter definition consisting of beats per measure (numerator) and the reference beat unit (denominator).
-public struct TimeSignature: Equatable, Hashable, Sendable, CustomStringConvertible {
+public struct TimeSignature: Codable, Equatable, Hashable, Sendable, CustomStringConvertible {
     public let beatsPerMeasure: Int
     public let beatValue: Int
 

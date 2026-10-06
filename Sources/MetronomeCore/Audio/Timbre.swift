@@ -1,7 +1,7 @@
 import Foundation
 
 /// Defines available synthesizer timbres for click generation.
-public enum Timbre: String, CaseIterable, Sendable {
+public enum Timbre: String, CaseIterable, Codable, Equatable, Hashable, Sendable {
     case woodblock
     case digitalBeep
     case studioClick
