@@ -1,0 +1,15 @@
+[2026-10-07 01:42:20] [TASK-002] [SUCCESS]
+- Target: Sources/MetronomeCore/Audio/, Tests/MetronomeCoreTests/AudioTests.swift
+- Scope: Implemented pure PCM click synthesis for 5 timbres (Woodblock, DigitalBeep, StudioClick, Rimshot, SineSynth), DownbeatPitch semitone tuning, dynamic BeatEmphasis envelope gains, ReferenceDrone continuous sine generator (440-442Hz), and MetronomeAudioEngine buffer caching & low-latency scheduling.
+- Verify: swift test --filter AudioTests (5/5 tests passed in 0.080s; 14/14 full suite passed).
+- Confidence: 5/5 (zero clipping verified, exact float channel buffer bounds checks).
+
+[2026-10-07 01:40:30] [TASK-001] [SUCCESS]
+- Target: Package.swift, Sources/MetronomeCore/Rhythm/, Tests/MetronomeCoreTests/RhythmTests.swift
+- Scope: Scaffolded SPM package with MetronomeCore & MetronomeApp targets. Implemented Tempo (20-400 BPM + TapTempoCalculator), TimeSignature, Subdivision, GrooveFeel (50-75% shuffle), BeatEmphasis, MeasurePattern, RhythmEventScheduler.
+- Verify: swift test --filter RhythmTests (9/9 tests passed in 0.001s).
+- Commit: bff0243
+
+# ==============================================================================
+# Progress Log (Newest Entries Prepended at the Top)
+# ==============================================================================
