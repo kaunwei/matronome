@@ -1,4 +1,14 @@
-import Foundation
+import SwiftUI
 import MetronomeCore
 
-print("Metronome CLI / App Target Initialized")
+struct MetronomeApp: App {
+    var body: some Scene {
+        WindowGroup {
+            MainMetronomeView()
+        }
+        .windowStyle(.hiddenTitleBar)
+        .defaultSize(width: 580, height: 760)
+    }
+}
+
+MetronomeApp.main()

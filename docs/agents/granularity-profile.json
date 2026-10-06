@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "default_granularity": "Level 1 (Coarse)",
+  "modules": {
+    "Sources/MetronomeCore/Rhythm": {
+      "recommended_level": "Level 1 (Coarse)",
+      "last_score": 5,
+      "success_rate": "100%",
+      "total_tasks": 0,
+      "notes": "Rhythm engine with subdivisions (triplets, 6-tuplets, shuffle) and pattern timing"
+    },
+    "Sources/MetronomeCore/Audio": {
+      "recommended_level": "Level 1 (Coarse)",
+      "last_score": 5,
+      "success_rate": "100%",
+      "total_tasks": 0,
+      "notes": "AVAudioEngine audio synthesizer, multi-timbre click generator, and reference pitch drone"
+    },
+    "Sources/MetronomeCore/State": {
+      "recommended_level": "Level 1 (Coarse)",
+      "last_score": 5,
+      "success_rate": "100%",
+      "total_tasks": 0,
+      "notes": "Practice time tracker, target timer, daily stats, and dynamic preset slots manager"
+    },
+    "Sources/MetronomeCore/Trainers": {
+      "recommended_level": "Level 1 (Coarse)",
+      "last_score": 5,
+      "success_rate": "100%",
+      "total_tasks": 0,
+      "notes": "Speed trainer (tempo ramp) and Gap trainer (silent measure) algorithms"
+    },
+    "Sources/MetronomeCore/Engine": {
+      "recommended_level": "Level 1 (Coarse)",
+      "last_score": 5,
+      "success_rate": "100%",
+      "total_tasks": 0,
+      "notes": "Unified orchestrator bridging audio, rhythm scheduler, trainers, and practice tracking"
+    },
+    "Sources/MetronomeApp": {
+      "recommended_level": "Level 1 (Coarse)",
+      "last_score": 5,
+      "success_rate": "100%",
+      "total_tasks": 0,
+      "notes": "SwiftUI macOS Desktop UI with clean minimalist layout, pendulum, trainers drawer, and preset slots"
+    }
+  }
+}
