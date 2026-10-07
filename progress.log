@@ -1,3 +1,15 @@
+[2026-10-07 23:34:00] [TASK-017] [SUCCESS]
+- Target: scripts/build_app.sh, Sources/MetronomeCore/Audio/MetronomeAudioEngine.swift
+- Scope: Removed NSMicrophoneUsageDescription completely from Info.plist generation in scripts/build_app.sh to eliminate macOS TCC microphone permission prompts. Verified MetronomeAudioEngine is strictly output-only (attaching and connecting only playerNode & droneNode to mainMixerNode/outputNode without referencing inputNode).
+- Verify: swift test && bash scripts/build_app.sh && ! grep -i "NSMicrophoneUsageDescription" build/Metronome.app/Contents/Info.plist passed 100% (34/34 unit tests passed, standalone app bundle created, clean Info.plist verified).
+- Confidence: 5/5 (Zero microphone usage key, pure output audio graph verified).
+
+[2026-10-07 23:23:35] [TASK-016] [SUCCESS]
+- Target: Sources/MetronomeApp/Views/Slots/PresetSlotsBar.swift
+- Scope: Removed redundant 'Recall Preset' action from preset card .contextMenu in PresetSlotsBar.swift since clicking the preset card already recalls the preset. Retained 'Overwrite with Current Settings', 'Rename...', and 'Delete Preset' context menu options.
+- Verify: swift test && bash scripts/build_app.sh passed 100% (34/34 unit tests passed, standalone app bundled and verified).
+- Confidence: 5/5 (Clean context menu structure, preserved all actions and keyboard shortcuts).
+
 [2026-10-07 03:17:00] [TASK-015] [SUCCESS]
 - Target: scripts/generate_icon.py, scripts/build_app.sh, build/Metronome.app
 - Scope: Processed user image Gemini_Generated_Image_llg4pollg4pollg4.jpeg into official macOS App Icon hierarchy (16px to 1024px) with standard continuous squircle curvature, ambient drop shadow, and clean border highlight. Compiled to build/AppIcon.icns via iconutil, bundled into Metronome.app/Contents/Resources, and regenerated Metronome.app & Metronome.zip with LaunchServices refresh.

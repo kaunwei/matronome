@@ -84,8 +84,6 @@ cat << 'EOF' > "${CONTENTS_DIR}/Info.plist"
     <true/>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>Microphone access is not required but audio engine operates on macOS Audio subsystem.</string>
 </dict>
 </plist>
 EOF
