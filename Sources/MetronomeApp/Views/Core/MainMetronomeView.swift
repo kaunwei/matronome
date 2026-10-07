@@ -1,7 +1,7 @@
 import SwiftUI
 import MetronomeCore
 
-/// Main SwiftUI Metronome view assembling all interactive visualizers and rhythm controls.
+/// Main SwiftUI Metronome view assembling all interactive visualizers, tempo controls, rhythm settings, and preset slots.
 @MainActor
 public struct MainMetronomeView: View {
     @StateObject private var viewModel: MetronomeViewModel
@@ -12,38 +12,29 @@ public struct MainMetronomeView: View {
     
     public var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                // Practice Time & Status Header (with collapsible Target Countdown Timer)
+            VStack(spacing: 16) {
+                // 1. Practice Time & Status Header (Session, Weekly Reset, Target Countdown)
                 PracticeTimeHeader(viewModel: viewModel)
                 
-                // Dynamic Preset Slots Bar (Hotkeys 1-9, snapshot recall & management)
-                PresetSlotsBar(viewModel: viewModel)
+                // 2. High-Visibility Beat LEDs Indicator
+                BeatLEDsView(viewModel: viewModel)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(Color(nsColor: .windowBackgroundColor))
+                            .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
+                    )
                 
-                // Visualizer Section (Pendulum & Beat LEDs)
-                VStack(spacing: 12) {
-                    PendulumVisualizerView(viewModel: viewModel)
-                    BeatLEDsView(viewModel: viewModel)
-                }
-                .padding(16)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color(nsColor: .windowBackgroundColor))
-                        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
-                )
-                
-                // BPM Dial & Stepper
+                // 3. Integrated Tempo & Transport Centerpiece (BPM + Start/Pause + Tap)
                 BPMDialView(viewModel: viewModel)
-                    .padding(16)
                     .background(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
                             .fill(Color(nsColor: .windowBackgroundColor))
                             .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
                     )
                 
-                // Transport Controls (Play / Stop / Tap Tempo)
-                TransportControlView(viewModel: viewModel)
-                
-                // Rhythm Settings (Time Signature, Subdivision, Shuffle, Timbre)
+                // 4. Rhythm Settings (Customizable Time Signature, Subdivision, Groove/Shuffle)
                 RhythmSettingsView(viewModel: viewModel)
                     .padding(16)
                     .background(
@@ -52,13 +43,16 @@ public struct MainMetronomeView: View {
                             .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
                     )
                 
-                // Interactive Measure Pattern Editor
+                // 5. Interactive Measure Pattern Editor (Per-beat toggle downbeat/accent/mute)
                 MeasurePatternEditorView(viewModel: viewModel)
                 
-                // Collapsible Pro Tools Drawer (Speed Trainer, Gap Trainer, Drone Tuner, Stats)
+                // 6. Dynamic 2-Column Preset Slots Bar (Hotkeys 1-9, Elongated Cards, Scrollable)
+                PresetSlotsBar(viewModel: viewModel)
+                
+                // 7. Collapsible Pro Tools Drawer (Speed Trainer, Gap Trainer, Practice Stats)
                 ProToolsDrawerView(viewModel: viewModel)
                 
-                // Sound Settings Button
+                // 8. Sound & Pitch Settings Button
                 HStack {
                     Spacer()
                     Button(action: {
@@ -70,33 +64,23 @@ public struct MainMetronomeView: View {
                         }
                         .font(.footnote.weight(.medium))
                         .foregroundColor(.secondary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color(nsColor: .controlBackgroundColor).opacity(0.6))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(Color(nsColor: .controlBackgroundColor).opacity(0.7))
                         .cornerRadius(8)
                     }
                     .buttonStyle(PlainButtonStyle())
                     Spacer()
                 }
-                .padding(.top, 4)
+                .padding(.top, 2)
             }
-            .padding(24)
-            .frame(minWidth: 520, maxWidth: 680)
+            .padding(20)
+            .frame(minWidth: 520, maxWidth: 660)
         }
-        .frame(minWidth: 540, minHeight: 700)
+        .frame(minWidth: 540, minHeight: 720)
         .background(Color(nsColor: .underPageBackgroundColor).opacity(0.5))
         .sheet(isPresented: $viewModel.isSoundSettingsPresented) {
             SoundSettingsSheetView(viewModel: viewModel)
-        }
-    }
-}
-
-private extension MetronomePlaybackState {
-    var statusText: String {
-        switch self {
-        case .playing: return "PLAYING"
-        case .paused:  return "PAUSED"
-        case .stopped: return "STOPPED"
         }
     }
 }

@@ -1,7 +1,7 @@
 import SwiftUI
 import MetronomeCore
 
-/// Dynamic horizontal preset slots bar with hotkeys (1-9), snapshot recall, and CRUD controls.
+/// Dynamic 2-column preset slots bar with elongated cards, hotkeys (1-9), snapshot recall, and scroll indicator.
 @MainActor
 public struct PresetSlotsBar: View {
     @ObservedObject var viewModel: MetronomeViewModel
@@ -29,15 +29,20 @@ public struct PresetSlotsBar: View {
         nonmutating set { _renamePresetName.wrappedValue = newValue }
     }
     
+    private let columns = [
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8)
+    ]
+    
     public init(viewModel: MetronomeViewModel) {
         self.viewModel = viewModel
     }
     
     public var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             // Header label
             HStack {
-                Label("PRESET SLOTS", systemImage: "square.grid.2x2.fill")
+                Label("PRESET SLOTS (\(viewModel.presets.count))", systemImage: "square.grid.2x2.fill")
                     .font(.system(size: 11, weight: .bold, design: .monospaced))
                     .foregroundColor(.secondary)
                 
@@ -53,7 +58,7 @@ public struct PresetSlotsBar: View {
                 }) {
                     HStack(spacing: 4) {
                         Image(systemName: "plus.circle.fill")
-                        Text("Save Preset")
+                        Text("Save New Slot")
                     }
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .padding(.horizontal, 8)
@@ -65,38 +70,19 @@ public struct PresetSlotsBar: View {
                     .foregroundColor(.accentColor)
                 }
                 .buttonStyle(.plain)
-                .help("Save current metronome settings as a new preset")
+                .help("Save current settings as a new preset")
             }
             
-            // Horizontal Scrollable Chips Row
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
+            // 2-Column Elongated Cards Grid inside Vertical ScrollView with visible scroll indicators
+            ScrollView(.vertical, showsIndicators: true) {
+                LazyVGrid(columns: columns, spacing: 8) {
                     ForEach(Array(viewModel.presets.enumerated()), id: \.element.id) { index, preset in
-                        slotChip(for: preset, index: index)
+                        elongatedSlotCard(for: preset, index: index)
                     }
-                    
-                    // Add Button at the end of the chip row
-                    Button(action: {
-                        newPresetName = "Slot \(viewModel.presets.count + 1)"
-                        isAddingPreset = true
-                    }) {
-                        VStack(spacing: 4) {
-                            Image(systemName: "plus")
-                                .font(.system(size: 14, weight: .bold))
-                            Text("New")
-                                .font(.system(size: 10, weight: .medium))
-                        }
-                        .foregroundColor(.secondary)
-                        .frame(width: 54, height: 48)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .strokeBorder(Color.secondary.opacity(0.3), style: StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
-                        )
-                    }
-                    .buttonStyle(.plain)
                 }
                 .padding(.vertical, 2)
             }
+            .frame(maxHeight: 140)
             
             // Inline Add Dialog
             if isAddingPreset {
@@ -108,7 +94,7 @@ public struct PresetSlotsBar: View {
                 inlineRenameBar
             }
         }
-        .padding(14)
+        .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color(nsColor: .windowBackgroundColor))
@@ -116,9 +102,9 @@ public struct PresetSlotsBar: View {
         )
     }
     
-    // MARK: - Single Slot Chip
+    // MARK: - Elongated 2-Column Slot Card
     @ViewBuilder
-    private func slotChip(for preset: MetronomePreset, index: Int) -> some View {
+    private func elongatedSlotCard(for preset: MetronomePreset, index: Int) -> some View {
         let isSelected = (viewModel.selectedPresetId == preset.id)
         let hotkeyNumber = index < 9 ? "\(index + 1)" : nil
         
@@ -138,6 +124,7 @@ public struct PresetSlotsBar: View {
                         )
                 }
                 
+                // Name & parameters
                 VStack(alignment: .leading, spacing: 2) {
                     Text(preset.name)
                         .font(.system(size: 12, weight: isSelected ? .bold : .semibold, design: .rounded))
@@ -158,16 +145,24 @@ public struct PresetSlotsBar: View {
                             .foregroundColor(.secondary)
                     }
                 }
+                
+                Spacer()
+                
+                if isSelected {
+                    Circle()
+                        .fill(Color.accentColor)
+                        .frame(width: 6, height: 6)
+                }
             }
             .padding(.horizontal, 10)
-            .padding(.vertical, 8)
-            .frame(minWidth: 100, minHeight: 48)
+            .padding(.vertical, 7)
+            .frame(maxWidth: .infinity, minHeight: 38)
             .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(isSelected ? Color.accentColor.opacity(0.15) : Color.secondary.opacity(0.06))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 1.5)
             )
         }
@@ -192,7 +187,6 @@ public struct PresetSlotsBar: View {
                 viewModel.deletePreset(id: preset.id)
             }
         }
-        // Keyboard Shortcut binding for 1..9
         .background {
             if index < 9 {
                 hotkeyReceiver(index: index + 1)

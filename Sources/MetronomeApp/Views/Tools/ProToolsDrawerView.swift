@@ -1,7 +1,7 @@
 import SwiftUI
 import MetronomeCore
 
-/// Collapsible Pro Tools Drawer hosting Speed Trainer, Gap Trainer, Drone Tuner, and Practice Analytics.
+/// Collapsible Pro Tools Drawer hosting Speed Trainer, Gap Trainer, and Practice Analytics.
 public struct ProToolsDrawerView: View {
     @ObservedObject public var viewModel: MetronomeViewModel
     
@@ -24,7 +24,7 @@ public struct ProToolsDrawerView: View {
                         .font(.headline)
                         .foregroundColor(.primary)
                     
-                    if viewModel.isSpeedTrainerActive || viewModel.isGapTrainerActive || viewModel.isDronePlaying {
+                    if viewModel.isSpeedTrainerActive || viewModel.isGapTrainerActive {
                         HStack(spacing: 4) {
                             Circle()
                                 .fill(Color.green)
@@ -96,8 +96,6 @@ public struct ProToolsDrawerView: View {
                             SpeedTrainerView(viewModel: viewModel)
                         case .gapTrainer:
                             GapTrainerView(viewModel: viewModel)
-                        case .droneTuner:
-                            ReferenceDroneView(viewModel: viewModel)
                         case .practiceStats:
                             PracticeStatsDashboardView(viewModel: viewModel)
                         }

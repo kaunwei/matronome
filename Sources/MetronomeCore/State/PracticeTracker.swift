@@ -149,6 +149,25 @@ public final class PracticeTracker: @unchecked Sendable {
         savePersistedData()
     }
 
+    /// Resets total accumulated practice time to zero.
+    public func resetTotalPracticeTime() {
+        lock.lock()
+        defer { lock.unlock() }
+        persistedTotalPracticeTime = 0
+        savePersistedData()
+    }
+
+    /// Resets practice sessions recorded in the current calendar week.
+    public func resetWeeklyPracticeTime(for date: Date = Date(), calendar: Calendar = .current) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard let weekInterval = calendar.dateInterval(of: .weekOfYear, for: date) else { return }
+        let removedDuration = sessions.filter { weekInterval.contains($0.date) }.reduce(0.0) { $0 + $1.duration }
+        sessions.removeAll { weekInterval.contains($0.date) }
+        persistedTotalPracticeTime = max(0, persistedTotalPracticeTime - removedDuration)
+        savePersistedData()
+    }
+
     /// Elapsed time for the current practice session in seconds.
     public var currentPracticeTime: TimeInterval {
         lock.lock()

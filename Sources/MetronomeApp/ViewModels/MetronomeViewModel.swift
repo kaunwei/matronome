@@ -129,6 +129,7 @@ public final class MetronomeViewModel: ObservableObject {
 
     // MARK: - Practice Tracking & Target Timer State
     @Published public var currentPracticeTime: TimeInterval = 0
+    @Published public var weeklyPracticeTime: TimeInterval = 0
     @Published public var totalPracticeTime: TimeInterval = 0
     @Published public var targetCountdownDuration: TimeInterval = 0
     @Published public var targetCountdownRemaining: TimeInterval = 0
@@ -464,6 +465,7 @@ public final class MetronomeViewModel: ObservableObject {
     private func updatePracticeStats() {
         currentPracticeTime = engine.practiceTracker.currentPracticeTime
         totalPracticeTime = engine.practiceTracker.totalPracticeTimeWithCurrentSession
+        weeklyPracticeTime = engine.practiceTracker.stats.weeklyPracticeTime() + (engine.practiceTracker.isRunning ? currentPracticeTime : 0)
         
         if isTargetTimerRunning {
             engine.practiceTargetTimer.tick()
@@ -482,6 +484,17 @@ public final class MetronomeViewModel: ObservableObject {
     public func resetCurrentPracticeSession() {
         engine.practiceTracker.resetCurrentSession()
         currentPracticeTime = 0
+    }
+
+    public func resetWeeklyPracticeTime() {
+        engine.practiceTracker.resetWeeklyPracticeTime()
+        weeklyPracticeTime = 0
+    }
+
+    public func resetTotalPracticeTime() {
+        engine.practiceTracker.resetTotalPracticeTime()
+        totalPracticeTime = 0
+        weeklyPracticeTime = 0
     }
     
     public func setTargetCountdownDuration(_ duration: TimeInterval) {
@@ -557,34 +570,6 @@ public final class MetronomeViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Drone Tuner Controls
-    
-    public func toggleDrone() {
-        if isDronePlaying {
-            stopDrone()
-        } else {
-            startDrone()
-        }
-    }
-    
-    public func startDrone() {
-        do {
-            try droneReference.start()
-            isDronePlaying = true
-        } catch {
-            print("Failed to start Reference Drone: \(error)")
-        }
-    }
-    
-    public func stopDrone() {
-        droneReference.stop()
-        isDronePlaying = false
-    }
-    
-    public func setDronePitch(frequency: Double) {
-        droneFrequency = max(20.0, min(2000.0, frequency))
-    }
-    
     // MARK: - UI Presentation Controls
     
     public func toggleToolsDrawer() {
@@ -594,14 +579,17 @@ public final class MetronomeViewModel: ObservableObject {
     public func toggleSoundSettings() {
         isSoundSettingsPresented.toggle()
     }
+
+    public func setTimeSignature(beats: Int, value: Int) {
+        self.timeSignature = TimeSignature(beatsPerMeasure: beats, beatValue: value)
+    }
 }
 
 /// Tabs available within the Pro Tools Drawer
 public enum ToolsTab: String, CaseIterable, Identifiable, Sendable {
     case speedTrainer = "Speed Trainer"
     case gapTrainer = "Gap Trainer"
-    case droneTuner = "Drone Tuner"
-    case practiceStats = "Practice Stats"
+    case practiceStats = "Practice Stats & History"
     
     public var id: String { rawValue }
     
@@ -609,7 +597,6 @@ public enum ToolsTab: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .speedTrainer: return "gauge.with.dots.needle.bottom.50percent"
         case .gapTrainer: return "waveform.slash"
-        case .droneTuner: return "tuningfork"
         case .practiceStats: return "chart.bar.xaxis"
         }
     }

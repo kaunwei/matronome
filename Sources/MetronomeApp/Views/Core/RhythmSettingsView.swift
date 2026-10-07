@@ -1,11 +1,11 @@
 import SwiftUI
 import MetronomeCore
 
-/// Rhythm parameter settings: Time Signature, Subdivision, Groove/Shuffle feel, and Sound Timbre.
+/// Rhythm parameter settings: Customizable Time Signature (custom numerator/denominator), Subdivision, and Groove/Shuffle feel.
 public struct RhythmSettingsView: View {
     @ObservedObject var viewModel: MetronomeViewModel
     
-    // Preset time signatures
+    // Preset time signatures for quick selection
     private let commonTimeSignatures: [TimeSignature] = [
         TimeSignature(beatsPerMeasure: 2, beatValue: 4),
         TimeSignature(beatsPerMeasure: 3, beatValue: 4),
@@ -13,8 +13,7 @@ public struct RhythmSettingsView: View {
         TimeSignature(beatsPerMeasure: 5, beatValue: 4),
         TimeSignature(beatsPerMeasure: 6, beatValue: 8),
         TimeSignature(beatsPerMeasure: 7, beatValue: 8),
-        TimeSignature(beatsPerMeasure: 9, beatValue: 8),
-        TimeSignature(beatsPerMeasure: 12, beatValue: 8)
+        TimeSignature(beatsPerMeasure: 3, beatValue: 3)
     ]
     
     public init(viewModel: MetronomeViewModel) {
@@ -23,38 +22,121 @@ public struct RhythmSettingsView: View {
     
     public var body: some View {
         VStack(spacing: 16) {
-            // Time Signature & Subdivision Row
-            HStack(alignment: .top, spacing: 16) {
-                // Time Signature Card
-                VStack(alignment: .leading, spacing: 8) {
+            // Time Signature Section
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
                     Label("Time Signature", systemImage: "metronome")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.secondary)
                     
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 6) {
-                            ForEach(commonTimeSignatures, id: \.self) { ts in
-                                let isSelected = (viewModel.timeSignature == ts)
-                                Button(action: {
-                                    viewModel.timeSignature = ts
-                                }) {
-                                    Text(ts.description)
-                                        .font(.system(size: 12, weight: isSelected ? .bold : .medium, design: .monospaced))
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 6)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                                .fill(isSelected ? Color.accentColor : Color.secondary.opacity(0.1))
-                                        )
-                                        .foregroundColor(isSelected ? .white : .primary)
-                                }
-                                .buttonStyle(.plain)
+                    Spacer()
+                    
+                    // Custom Steppers for Beats and Beat Value
+                    HStack(spacing: 4) {
+                        Text("Custom:")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.secondary)
+                        
+                        // Beats Stepper (Numerator)
+                        HStack(spacing: 2) {
+                            Button(action: {
+                                let newBeats = max(1, viewModel.timeSignature.beatsPerMeasure - 1)
+                                viewModel.setTimeSignature(beats: newBeats, value: viewModel.timeSignature.beatValue)
+                            }) {
+                                Image(systemName: "minus")
+                                    .font(.system(size: 9, weight: .bold))
+                                    .frame(width: 18, height: 20)
+                                    .background(Color.secondary.opacity(0.12))
+                                    .cornerRadius(4)
                             }
+                            .buttonStyle(.plain)
+                            
+                            Text("\(viewModel.timeSignature.beatsPerMeasure)")
+                                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                                .frame(minWidth: 22)
+                            
+                            Button(action: {
+                                let newBeats = min(32, viewModel.timeSignature.beatsPerMeasure + 1)
+                                viewModel.setTimeSignature(beats: newBeats, value: viewModel.timeSignature.beatValue)
+                            }) {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 9, weight: .bold))
+                                    .frame(width: 18, height: 20)
+                                    .background(Color.secondary.opacity(0.12))
+                                    .cornerRadius(4)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        
+                        Text("/")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.secondary)
+                        
+                        // Beat Value Stepper (Denominator, e.g. 3, 4, 8, etc.)
+                        HStack(spacing: 2) {
+                            Button(action: {
+                                let newVal = max(1, viewModel.timeSignature.beatValue - 1)
+                                viewModel.setTimeSignature(beats: viewModel.timeSignature.beatsPerMeasure, value: newVal)
+                            }) {
+                                Image(systemName: "minus")
+                                    .font(.system(size: 9, weight: .bold))
+                                    .frame(width: 18, height: 20)
+                                    .background(Color.secondary.opacity(0.12))
+                                    .cornerRadius(4)
+                            }
+                            .buttonStyle(.plain)
+                            
+                            Text("\(viewModel.timeSignature.beatValue)")
+                                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                                .frame(minWidth: 22)
+                            
+                            Button(action: {
+                                let newVal = min(32, viewModel.timeSignature.beatValue + 1)
+                                viewModel.setTimeSignature(beats: viewModel.timeSignature.beatsPerMeasure, value: newVal)
+                            }) {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 9, weight: .bold))
+                                    .frame(width: 18, height: 20)
+                                    .background(Color.secondary.opacity(0.12))
+                                    .cornerRadius(4)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(Color(nsColor: .controlBackgroundColor).opacity(0.6))
+                    )
+                }
+                
+                // Common preset chips
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(commonTimeSignatures, id: \.self) { ts in
+                            let isSelected = (viewModel.timeSignature == ts)
+                            Button(action: {
+                                viewModel.timeSignature = ts
+                            }) {
+                                Text(ts.description)
+                                    .font(.system(size: 12, weight: isSelected ? .bold : .medium, design: .monospaced))
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 5)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                            .fill(isSelected ? Color.accentColor : Color.secondary.opacity(0.1))
+                                    )
+                                    .foregroundColor(isSelected ? .white : .primary)
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                
+            }
+            
+            // Subdivision & Timbre Row
+            HStack(alignment: .top, spacing: 16) {
                 // Subdivision Card
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Subdivision", systemImage: "music.note")
@@ -85,57 +167,16 @@ public struct RhythmSettingsView: View {
                         }
                     }
                 }
-            }
-            
-            // Groove & Shuffle Controls + Audio Settings Row
-            HStack(spacing: 16) {
-                // Shuffle / Groove Feel
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Label("Shuffle & Groove", systemImage: "waveform.path")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.secondary)
-                        
-                        Spacer()
-                        
-                        Text("\(Int(viewModel.grooveFeel.shuffleRatio * 100))%")
-                            .font(.system(size: 11, weight: .bold, design: .monospaced))
-                            .foregroundColor(.accentColor)
-                    }
-                    
-                    HStack(spacing: 6) {
-                        groovePresetButton(name: "Straight", ratio: 0.50)
-                        groovePresetButton(name: "Light (58%)", ratio: 0.58)
-                        groovePresetButton(name: "Triplet (66%)", ratio: 2.0 / 3.0)
-                        groovePresetButton(name: "Hard (75%)", ratio: 0.75)
-                    }
-                    
-                    Slider(
-                        value: Binding(
-                            get: { viewModel.grooveFeel.shuffleRatio },
-                            set: { viewModel.setGrooveShuffleRatio($0) }
-                        ),
-                        in: 0.50...0.75,
-                        step: 0.01
-                    )
-                    .accentColor(.accentColor)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(10)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color(nsColor: .controlBackgroundColor).opacity(0.4))
-                )
                 
-                // Sound Timbre & Volume
+                Spacer()
+                
+                // Sound Timbre & Mute
                 VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Label("Sound Timbre", systemImage: "speaker.wave.2.fill")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.secondary)
-                        
-                        Spacer()
-                        
+                    Label("Timbre & Volume", systemImage: "speaker.wave.2.fill")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.secondary)
+                    
+                    HStack(spacing: 8) {
                         Picker("", selection: $viewModel.timbre) {
                             ForEach(Timbre.allCases, id: \.self) { timbre in
                                 Text(timbre.displayName).tag(timbre)
@@ -143,9 +184,7 @@ public struct RhythmSettingsView: View {
                         }
                         .pickerStyle(.menu)
                         .frame(width: 120)
-                    }
-                    
-                    HStack(spacing: 8) {
+                        
                         Button(action: {
                             viewModel.toggleMute()
                         }) {
@@ -154,27 +193,47 @@ public struct RhythmSettingsView: View {
                                 .frame(width: 20)
                         }
                         .buttonStyle(.plain)
-                        
-                        Slider(
-                            value: $viewModel.volume,
-                            in: 0.0...1.0,
-                            step: 0.05
-                        )
-                        .accentColor(.accentColor)
-                        
-                        Text("\(Int(viewModel.volume * 100))%")
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
-                            .foregroundColor(.secondary)
-                            .frame(width: 32, alignment: .trailing)
                     }
                 }
-                .frame(maxWidth: .infinity)
-                .padding(10)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color(nsColor: .controlBackgroundColor).opacity(0.4))
-                )
             }
+            
+            // Groove & Shuffle Controls (with explanatory tooltip)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Label("Groove & Shuffle Feel (搖擺律動)", systemImage: "waveform.path")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.secondary)
+                        .help("Groove/Shuffle: 調整音符微觀長短比例。50%為直拍，66%為三連音搖擺(Triplet Swing)，75%為重搖擺(Hard Shuffle)")
+                    
+                    Spacer()
+                    
+                    Text("\(Int(viewModel.grooveFeel.shuffleRatio * 100))%")
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundColor(.accentColor)
+                }
+                
+                HStack(spacing: 6) {
+                    groovePresetButton(name: "Straight (直拍 50%)", ratio: 0.50)
+                    groovePresetButton(name: "Light (58%)", ratio: 0.58)
+                    groovePresetButton(name: "Triplet (搖擺 66%)", ratio: 2.0 / 3.0)
+                    groovePresetButton(name: "Hard (重搖擺 75%)", ratio: 0.75)
+                }
+                
+                Slider(
+                    value: Binding(
+                        get: { viewModel.grooveFeel.shuffleRatio },
+                        set: { viewModel.setGrooveShuffleRatio($0) }
+                    ),
+                    in: 0.50...0.75,
+                    step: 0.01
+                )
+                .accentColor(.accentColor)
+            }
+            .padding(10)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color(nsColor: .controlBackgroundColor).opacity(0.4))
+            )
         }
     }
     

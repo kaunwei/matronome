@@ -1,7 +1,7 @@
 import SwiftUI
 import MetronomeCore
 
-/// Minimalist header displaying practice statistics, session reset, and collapsible target countdown timer.
+/// Minimalist header displaying practice statistics (Session, Weekly, Total), reset triggers, and target countdown timer.
 @MainActor
 public struct PracticeTimeHeader: View {
     @ObservedObject var viewModel: MetronomeViewModel
@@ -37,62 +37,87 @@ public struct PracticeTimeHeader: View {
                 Spacer()
                 
                 // Practice Stats Cluster
-                HStack(spacing: 16) {
-                    // Current Practice Time (Session)
-                    HStack(spacing: 6) {
+                HStack(spacing: 14) {
+                    // Current Session Practice Time
+                    HStack(spacing: 5) {
                         Image(systemName: "timer")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(.accentColor)
                         
                         VStack(alignment: .leading, spacing: 0) {
                             Text("SESSION")
-                                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                .font(.system(size: 8, weight: .bold, design: .monospaced))
                                 .foregroundColor(.secondary)
                             
                             Text(formatDuration(viewModel.currentPracticeTime))
-                                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                                .font(.system(size: 12, weight: .bold, design: .monospaced))
                                 .foregroundColor(.primary)
                         }
                         
-                        // Reset Current Session Button
                         Button(action: {
                             viewModel.resetCurrentPracticeSession()
                         }) {
                             Image(systemName: "arrow.counterclockwise")
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(.system(size: 9, weight: .semibold))
                                 .foregroundColor(.secondary)
-                                .padding(4)
-                                .background(
-                                    Circle()
-                                        .fill(Color.secondary.opacity(0.1))
-                                )
+                                .padding(3)
+                                .background(Circle().fill(Color.secondary.opacity(0.1)))
                         }
                         .buttonStyle(.plain)
-                        .help("Reset current practice session time")
+                        .help("Reset current session timer")
                     }
                     
-                    Divider()
-                        .frame(height: 24)
+                    Divider().frame(height: 20)
                     
-                    // Total Practice Time
-                    HStack(spacing: 6) {
-                        Image(systemName: "chart.bar.fill")
-                            .font(.system(size: 12, weight: .semibold))
+                    // Weekly Practice Time (with Weekly Reset)
+                    HStack(spacing: 5) {
+                        Image(systemName: "calendar")
+                            .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(.orange)
                         
                         VStack(alignment: .leading, spacing: 0) {
-                            Text("TOTAL")
-                                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            Text("THIS WEEK")
+                                .font(.system(size: 8, weight: .bold, design: .monospaced))
+                                .foregroundColor(.secondary)
+                            
+                            Text(formatTotalDuration(viewModel.weeklyPracticeTime))
+                                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                .foregroundColor(.primary)
+                        }
+                        
+                        Button(action: {
+                            viewModel.resetWeeklyPracticeTime()
+                        }) {
+                            Image(systemName: "arrow.counterclockwise")
+                                .font(.system(size: 9, weight: .semibold))
+                                .foregroundColor(.secondary)
+                                .padding(3)
+                                .background(Circle().fill(Color.secondary.opacity(0.1)))
+                        }
+                        .buttonStyle(.plain)
+                        .help("Reset weekly practice total")
+                    }
+                    
+                    Divider().frame(height: 20)
+                    
+                    // Lifetime Total Practice Time
+                    HStack(spacing: 5) {
+                        Image(systemName: "chart.bar.fill")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.purple)
+                        
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text("ALL-TIME")
+                                .font(.system(size: 8, weight: .bold, design: .monospaced))
                                 .foregroundColor(.secondary)
                             
                             Text(formatTotalDuration(viewModel.totalPracticeTime))
-                                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                                .font(.system(size: 12, weight: .bold, design: .monospaced))
                                 .foregroundColor(.primary)
                         }
                     }
                     
-                    Divider()
-                        .frame(height: 24)
+                    Divider().frame(height: 20)
                     
                     // Target Countdown Toggle Button
                     Button(action: {
@@ -100,27 +125,23 @@ public struct PracticeTimeHeader: View {
                             viewModel.toggleTargetTimerExpanded()
                         }
                     }) {
-                        HStack(spacing: 6) {
+                        HStack(spacing: 4) {
                             Image(systemName: viewModel.isTargetTimerRunning ? "hourglass.circle.fill" : "target")
-                                .font(.system(size: 13, weight: .bold))
+                                .font(.system(size: 12, weight: .bold))
                                 .foregroundColor(viewModel.isTargetTimerFinished ? .green : (viewModel.isTargetTimerRunning ? .accentColor : .secondary))
                             
                             if viewModel.targetCountdownDuration > 0 {
                                 Text(formatDuration(viewModel.targetCountdownRemaining))
-                                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                    .font(.system(size: 11, weight: .bold, design: .monospaced))
                                     .foregroundColor(viewModel.isTargetTimerFinished ? .green : (viewModel.isTargetTimerRunning ? .accentColor : .primary))
                             } else {
-                                Text("Target")
-                                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                Text("Goal")
+                                    .font(.system(size: 11, weight: .semibold, design: .rounded))
                                     .foregroundColor(.secondary)
                             }
-                            
-                            Image(systemName: viewModel.isTargetTimerExpanded ? "chevron.up" : "chevron.down")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(.secondary)
                         }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
                         .background(
                             Capsule()
                                 .fill(viewModel.isTargetTimerExpanded ? Color.accentColor.opacity(0.15) : Color.secondary.opacity(0.08))
@@ -137,10 +158,10 @@ public struct PracticeTimeHeader: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color(nsColor: .windowBackgroundColor))
                 .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 2)
         )
@@ -148,17 +169,17 @@ public struct PracticeTimeHeader: View {
     
     // MARK: - Status Badge
     private var statusBadge: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 5) {
             Circle()
                 .fill(viewModel.playbackState == .playing ? Color.green : (viewModel.playbackState == .paused ? Color.yellow : Color.secondary))
-                .frame(width: 8, height: 8)
+                .frame(width: 7, height: 7)
             
             Text(viewModel.playbackState.statusText)
-                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .font(.system(size: 10, weight: .bold, design: .monospaced))
                 .foregroundColor(.secondary)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 3)
         .background(
             Capsule()
                 .fill(Color.secondary.opacity(0.1))
@@ -167,12 +188,12 @@ public struct PracticeTimeHeader: View {
     
     // MARK: - Target Countdown Drawer
     private var targetCountdownDrawer: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 10) {
             Divider()
             
-            HStack(spacing: 16) {
+            HStack(spacing: 12) {
                 // Countdown Presets
-                HStack(spacing: 6) {
+                HStack(spacing: 5) {
                     targetPresetButton(label: "5m", minutes: 5)
                     targetPresetButton(label: "10m", minutes: 10)
                     targetPresetButton(label: "15m", minutes: 15)
@@ -185,52 +206,41 @@ public struct PracticeTimeHeader: View {
                 
                 // Target Countdown Progress & Display
                 if viewModel.targetCountdownDuration > 0 {
-                    HStack(spacing: 12) {
-                        // Remaining Time Text
-                        VStack(alignment: .trailing, spacing: 2) {
+                    HStack(spacing: 10) {
+                        VStack(alignment: .trailing, spacing: 1) {
                             Text(viewModel.isTargetTimerFinished ? "TARGET REACHED! 🎉" : "REMAINING")
-                                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                .font(.system(size: 8, weight: .bold, design: .monospaced))
                                 .foregroundColor(viewModel.isTargetTimerFinished ? .green : .secondary)
                             
                             Text(formatDuration(viewModel.targetCountdownRemaining))
-                                .font(.system(size: 20, weight: .heavy, design: .monospaced))
+                                .font(.system(size: 16, weight: .heavy, design: .monospaced))
                                 .foregroundColor(viewModel.isTargetTimerFinished ? .green : (viewModel.isTargetTimerRunning ? .accentColor : .primary))
                         }
                         
-                        // Start / Pause Control
                         Button(action: {
                             viewModel.toggleTargetTimer()
                         }) {
                             Image(systemName: viewModel.isTargetTimerRunning ? "pause.fill" : "play.fill")
-                                .font(.system(size: 13, weight: .bold))
+                                .font(.system(size: 12, weight: .bold))
                                 .foregroundColor(.white)
-                                .frame(width: 32, height: 32)
+                                .frame(width: 28, height: 28)
                                 .background(
-                                    Circle()
-                                        .fill(viewModel.isTargetTimerRunning ? Color.orange : Color.accentColor)
+                                    Circle().fill(viewModel.isTargetTimerRunning ? Color.orange : Color.accentColor)
                                 )
                         }
                         .buttonStyle(.plain)
                         
-                        // Reset Control
                         Button(action: {
                             viewModel.resetTargetTimer()
                         }) {
                             Image(systemName: "arrow.counterclockwise")
-                                .font(.system(size: 12, weight: .bold))
+                                .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.secondary)
-                                .frame(width: 30, height: 30)
-                                .background(
-                                    Circle()
-                                        .fill(Color.secondary.opacity(0.12))
-                                )
+                                .frame(width: 26, height: 26)
+                                .background(Circle().fill(Color.secondary.opacity(0.12)))
                         }
                         .buttonStyle(.plain)
                     }
-                } else {
-                    Text("Select a practice goal duration")
-                        .font(.system(size: 12, weight: .medium, design: .rounded))
-                        .foregroundColor(.secondary)
                 }
             }
             
@@ -241,17 +251,17 @@ public struct PracticeTimeHeader: View {
                     ZStack(alignment: .leading) {
                         Capsule()
                             .fill(Color.secondary.opacity(0.15))
-                            .frame(height: 6)
+                            .frame(height: 5)
                         
                         Capsule()
                             .fill(viewModel.isTargetTimerFinished ? Color.green : Color.accentColor)
-                            .frame(width: geo.size.width * CGFloat(progress), height: 6)
+                            .frame(width: geo.size.width * CGFloat(progress), height: 5)
                     }
                 }
-                .frame(height: 6)
+                .frame(height: 5)
             }
         }
-        .padding(.top, 4)
+        .padding(.top, 2)
     }
     
     private func targetPresetButton(label: String, minutes: Double) -> some View {
@@ -261,9 +271,9 @@ public struct PracticeTimeHeader: View {
             viewModel.startTargetTimer()
         }) {
             Text(label)
-                .font(.system(size: 11, weight: isSelected ? .bold : .semibold, design: .rounded))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
+                .font(.system(size: 10, weight: isSelected ? .bold : .semibold, design: .rounded))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
                 .background(
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .fill(isSelected ? Color.accentColor : Color.secondary.opacity(0.1))
