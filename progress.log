@@ -1,3 +1,9 @@
+[2026-10-07 03:17:00] [TASK-015] [SUCCESS]
+- Target: scripts/generate_icon.py, scripts/build_app.sh, build/Metronome.app
+- Scope: Processed user image Gemini_Generated_Image_llg4pollg4pollg4.jpeg into official macOS App Icon hierarchy (16px to 1024px) with standard continuous squircle curvature, ambient drop shadow, and clean border highlight. Compiled to build/AppIcon.icns via iconutil, bundled into Metronome.app/Contents/Resources, and regenerated Metronome.app & Metronome.zip with LaunchServices refresh.
+- Verify: test -f build/AppIcon.icns && bash scripts/build_app.sh passed 100% (34/34 unit tests passed).
+- Confidence: 5/5 (Native macOS squircle, full resolution iconset, .icns bundle integration verified).
+
 [2026-10-07 03:07:00] [TASK-014] [SUCCESS]
 - Target: scripts/generate_icon.py, scripts/build_app.sh, build/Metronome.app
 - Scope: Created scripts/generate_icon.py generating 1024x1024 macOS metronome icon with warm walnut body, metallic pendulum, brass weight, tempo scale and neon beat LEDs. Compiled full iconset (16px-1024px) to AppIcon.icns via iconutil. Updated build_app.sh to bundle icon into Contents/Resources and configure CFBundleIconFile in Info.plist.
@@ -64,7 +70,7 @@
 - Verify: swift test --filter StateTests (5/5 tests passed in 0.112s; 19/19 full suite passed).
 - Confidence: 5/5 (thread safety, Codable JSON roundtrip, persistence verified).
 
-[2026-10-07 01:42:20] [TASK-002] [SUCCESS]
+[2026-10-07 01:42:20] [TASK-002] [Audio] [SUCCESS]
 - Target: Sources/MetronomeCore/Audio/, Tests/MetronomeCoreTests/AudioTests.swift
 - Scope: Implemented pure PCM click synthesis for 5 timbres (Woodblock, DigitalBeep, StudioClick, Rimshot, SineSynth), DownbeatPitch semitone tuning, dynamic BeatEmphasis envelope gains, ReferenceDrone continuous sine generator (440-442Hz), and MetronomeAudioEngine buffer caching & low-latency scheduling.
 - Verify: swift test --filter AudioTests (5/5 tests passed in 0.080s; 14/14 full suite passed).
