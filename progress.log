@@ -1,3 +1,9 @@
+[2026-10-07 02:55:00] [TASK-011] [SUCCESS]
+- Target: Sources/MetronomeApp/Views/Header/PracticeTimeHeader.swift, Sources/MetronomeApp/Views/Core/MeasurePatternEditorView.swift
+- Scope: Removed text 'Metronome' from PracticeTimeHeader keeping only the icon. Enabled visible horizontal scroll indicators (`showsIndicators: true`) in MeasurePatternEditorView, added dynamic step tile compaction (28pt width, scaled icon & font, reduced spacing) when subdivision has 6 pulses to prevent cutoffs and ensure smooth horizontal scrolling for 6-tuplets and long measures.
+- Verify: swift test && swift build passed 100% (34/34 tests).
+- Confidence: 5/5 (Clean macOS SwiftUI layout, smooth horizontal scrolling, responsive 6-tuplet compaction).
+
 [2026-10-07 02:44:30] [TASK-010] [SUCCESS]
 - Target: Sources/MetronomeApp/Views/Header/PracticeTimeHeader.swift, Sources/MetronomeApp/Views/Slots/PresetSlotsBar.swift
 - Scope: Overhauled PracticeTimeHeader into clean monospaced fixed-width stat pills (Session, Weekly, Total) with unambiguous formatting (HH:MM:SS / Xh YYm / Xm YYs) preventing text wrapping. Enforced stable 2-column slot card heights and title tail truncation to eliminate jitter and width jumps.

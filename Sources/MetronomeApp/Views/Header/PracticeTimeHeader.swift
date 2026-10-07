@@ -21,15 +21,10 @@ public struct PracticeTimeHeader: View {
         VStack(spacing: 12) {
             // Main Top Bar
             HStack(spacing: 12) {
-                // App Logo & Name
-                HStack(spacing: 8) {
-                    Image(systemName: "metronome.fill")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.accentColor)
-                    
-                    Text("Metronome")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
-                }
+                // App Logo
+                Image(systemName: "metronome.fill")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.accentColor)
                 
                 // Playback status badge
                 statusBadge

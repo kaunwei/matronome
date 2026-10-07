@@ -54,7 +54,7 @@ public struct MeasurePatternEditorView: View {
             }
             
             // Steps Grid grouped by Beat
-            ScrollView(.horizontal, showsIndicators: false) {
+            ScrollView(.horizontal, showsIndicators: true) {
                 HStack(spacing: 8) {
                     ForEach(0..<beatsCount, id: \.self) { beatIndex in
                         beatColumnView(beatIndex: beatIndex)
@@ -86,6 +86,16 @@ public struct MeasurePatternEditorView: View {
         )
     }
     
+    private var stepTileWidth: CGFloat {
+        if pulsesPerBeat == 1 {
+            return 48
+        } else if pulsesPerBeat >= 6 {
+            return 28
+        } else {
+            return 36
+        }
+    }
+    
     // MARK: - Beat Column View
     private func beatColumnView(beatIndex: Int) -> some View {
         VStack(spacing: 6) {
@@ -93,7 +103,7 @@ public struct MeasurePatternEditorView: View {
                 .font(.system(size: 10, weight: .bold, design: .monospaced))
                 .foregroundColor(.secondary)
             
-            HStack(spacing: 4) {
+            HStack(spacing: pulsesPerBeat >= 6 ? 2 : 4) {
                 ForEach(0..<pulsesPerBeat, id: \.self) { subIndex in
                     let stepIndex = beatIndex * pulsesPerBeat + subIndex
                     if stepIndex < viewModel.pattern.steps.count {
@@ -117,18 +127,18 @@ public struct MeasurePatternEditorView: View {
         return Button(action: {
             viewModel.toggleStepEmphasis(at: stepIndex)
         }) {
-            VStack(spacing: 4) {
+            VStack(spacing: pulsesPerBeat >= 6 ? 2 : 4) {
                 // Emphasis Icon
                 Image(systemName: iconName(for: emphasis))
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: pulsesPerBeat >= 6 ? 11 : 14, weight: .bold))
                     .foregroundColor(emphasisColor(for: emphasis))
                 
                 // Emphasis text tag
                 Text(shortName(for: emphasis))
-                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .font(.system(size: pulsesPerBeat >= 6 ? 7 : 8, weight: .bold, design: .monospaced))
                     .foregroundColor(emphasisColor(for: emphasis))
             }
-            .frame(width: pulsesPerBeat == 1 ? 48 : 36, height: 46)
+            .frame(width: stepTileWidth, height: 46)
             .background(
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
                     .fill(isCurrent ? emphasisColor(for: emphasis).opacity(0.25) : emphasisColor(for: emphasis).opacity(0.08))
