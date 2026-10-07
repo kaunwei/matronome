@@ -54,9 +54,14 @@ struct RhythmTests {
         #expect(ts68.beatValue == 8)
         #expect(ts68.description == "6/8")
 
-        let invalid = TimeSignature(beatsPerMeasure: 0, beatValue: 5)
+        let custom33 = TimeSignature(beatsPerMeasure: 3, beatValue: 3)
+        #expect(custom33.beatsPerMeasure == 3)
+        #expect(custom33.beatValue == 3)
+        #expect(custom33.description == "3/3")
+
+        let invalid = TimeSignature(beatsPerMeasure: 0, beatValue: 0)
         #expect(invalid.beatsPerMeasure == 1)
-        #expect(invalid.beatValue == 4) // Defaults power of two
+        #expect(invalid.beatValue == 1)
     }
 
     // MARK: - Subdivision Tests
