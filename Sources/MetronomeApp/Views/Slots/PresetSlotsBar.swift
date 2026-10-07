@@ -130,6 +130,7 @@ public struct PresetSlotsBar: View {
                         .font(.system(size: 12, weight: isSelected ? .bold : .semibold, design: .rounded))
                         .foregroundColor(isSelected ? .primary : .secondary)
                         .lineLimit(1)
+                        .truncationMode(.tail)
                     
                     HStack(spacing: 4) {
                         Text("\(Int(preset.bpm)) BPM")
@@ -156,7 +157,7 @@ public struct PresetSlotsBar: View {
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 7)
-            .frame(maxWidth: .infinity, minHeight: 38)
+            .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(isSelected ? Color.accentColor.opacity(0.15) : Color.secondary.opacity(0.06))

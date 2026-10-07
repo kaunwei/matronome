@@ -1,3 +1,15 @@
+[2026-10-07 02:44:30] [TASK-010] [SUCCESS]
+- Target: Sources/MetronomeApp/Views/Header/PracticeTimeHeader.swift, Sources/MetronomeApp/Views/Slots/PresetSlotsBar.swift
+- Scope: Overhauled PracticeTimeHeader into clean monospaced fixed-width stat pills (Session, Weekly, Total) with unambiguous formatting (HH:MM:SS / Xh YYm / Xm YYs) preventing text wrapping. Enforced stable 2-column slot card heights and title tail truncation to eliminate jitter and width jumps.
+- Verify: swift test && swift build passed 100% (34/34 tests).
+- Confidence: 5/5 (Clean, fixed-alignment monospaced metrics, no erratic jumps or wrapping, verified build & test pass).
+
+[2026-10-07 02:43:00] [TASK-009] [SUCCESS]
+- Target: Sources/MetronomeApp/Views/Core/MainMetronomeView.swift, Sources/MetronomeApp/Views/Core/BPMDialView.swift
+- Scope: Reordered MainMetronomeView layout putting PresetSlotsBar at the 2nd row right above BeatLEDsView. Slimmed down BPMDialView centerpiece: reduced font size to 40pt, tightened vertical padding and element gaps for compact, sleek macOS HIG presentation.
+- Verify: swift test && swift build passed 100% (34/34 tests).
+- Confidence: 5/5 (Clean responsive layout, streamlined centerpiece hierarchy, verified build & test pass).
+
 [2026-10-07 01:58:30] [TASK-008] [SUCCESS]
 - Target: Sources/MetronomeApp/Views/Tools/, Sources/MetronomeApp/Views/Settings/
 - Scope: Built collapsible Pro Tools Drawer (SpeedTrainer, GapTrainer, ReferenceDrone Tuner, PracticeStatsDashboard) and SoundSettingsSheetView (Timbre selector, Downbeat Pitch frequency/semitone slider with shortcut chips, volume). Kept main screen ultra-clean.
