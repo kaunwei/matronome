@@ -7,6 +7,14 @@ PAUSE
 
 # Build & Environment Artifacts
 build/
+.build/
+.swiftpm/
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+
+# Python & Tooling
 .venv/
 venv/
 __pycache__/
@@ -14,7 +22,10 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Logs & System Files
 *.log
 !progress.log
-.build/
 .DS_Store
+*.swp
+*~

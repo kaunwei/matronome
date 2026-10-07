@@ -101,6 +101,9 @@ def main():
     
     # Candidate source image paths
     candidates = [
+        os.path.join(root_dir, "assets", "AppIcon_Source.jpeg"),
+        os.path.join(root_dir, "assets", "AppIcon_Source.jpg"),
+        os.path.join(root_dir, "assets", "AppIcon_Source.png"),
         os.path.join(root_dir, "Gemini_Generated_Image_llg4pollg4pollg4.jpeg"),
         os.path.join(root_dir, "Gemini_Generated_Image_llg4pollg4pollg4.jpg"),
         os.path.join(root_dir, "Gemini_Generated_Image_llg4pollg4pollg4.png"),
@@ -113,7 +116,7 @@ def main():
             break
             
     if not input_image:
-        print(f"Error: Source image Gemini_Generated_Image_llg4pollg4pollg4.jpeg not found in {root_dir}", file=sys.stderr)
+        print(f"Error: Source image not found in {root_dir}/assets/", file=sys.stderr)
         sys.exit(1)
         
     master_png = os.path.join(build_dir, "AppIcon_1024.png")
