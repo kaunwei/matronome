@@ -9,7 +9,7 @@ echo "=== Building Metronome macOS Release Application Bundle ==="
 cd "${ROOT_DIR}"
 
 # 1. Build release executable via Swift Package Manager
-echo "[1/4] Building release binary with swift build -c release..."
+echo "[1/5] Building release binary with swift build -c release..."
 swift build -c release
 
 # Retrieve the release binary directory
@@ -41,9 +41,12 @@ mkdir -p "${MACOS_DIR}" "${RESOURCES_DIR}"
 cp "${EXECUTABLE}" "${MACOS_DIR}/MetronomeApp"
 chmod +x "${MACOS_DIR}/MetronomeApp"
 
-# Copy AppIcon.icns into Contents/Resources
+# Copy AppIcon.icns and PNG into Contents/Resources
 if [[ -f "${BUILD_DIR}/AppIcon.icns" ]]; then
     cp "${BUILD_DIR}/AppIcon.icns" "${RESOURCES_DIR}/AppIcon.icns"
+fi
+if [[ -f "${BUILD_DIR}/AppIcon_1024.png" ]]; then
+    cp "${BUILD_DIR}/AppIcon_1024.png" "${RESOURCES_DIR}/AppIcon_1024.png"
 fi
 
 # 4. Create Info.plist
@@ -59,11 +62,15 @@ cat << 'EOF' > "${CONTENTS_DIR}/Info.plist"
     <string>MetronomeApp</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
+    <key>CFBundleIconName</key>
+    <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
     <string>com.matronome.MetronomeApp</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
+    <string>Metronome</string>
+    <key>CFBundleDisplayName</key>
     <string>Metronome</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
@@ -85,6 +92,13 @@ EOF
 
 # Create PkgInfo
 echo "APPL????" > "${CONTENTS_DIR}/PkgInfo"
+
+# Refresh macOS LaunchServices icon cache for this bundle
+touch "${APP_DIR}"
+LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
+if [[ -x "${LSREGISTER}" ]]; then
+    "${LSREGISTER}" -f "${APP_DIR}" 2>/dev/null || true
+fi
 
 # 5. Create Portable Archive
 echo "[5/5] Creating portable archive build/Metronome.zip..."
