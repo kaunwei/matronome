@@ -203,4 +203,63 @@ struct StateTests {
         #expect(newManager.count == 5)
         #expect(newManager.allPresets[0].name == "Standard 4/4")
     }
+
+    @Test func testMetronomePresetPatternSerializationAndBackwardCompatibility() throws {
+        // 1. Full preset with custom pattern and pitch semitones
+        let customPattern = MeasurePattern(
+            timeSignature: TimeSignature(beatsPerMeasure: 3, beatValue: 4),
+            subdivision: .triplet,
+            steps: [.downbeat, .ghost, .mute, .accent, .normal, .ghost, .normal, .ghost, .mute]
+        )
+        let presetWithPattern = MetronomePreset(
+            name: "Complex Polyrhythm Preset",
+            bpm: 135.0,
+            timeSignature: TimeSignature(beatsPerMeasure: 3, beatValue: 4),
+            subdivision: .triplet,
+            grooveFeel: .standardSwing,
+            downbeatPitchMultiplier: 1.5,
+            timbre: .woodblock,
+            pattern: customPattern,
+            downbeatPitchSemitones: 12.0
+        )
+
+        let encoder = JSONEncoder()
+        let encodedData = try encoder.encode(presetWithPattern)
+        let decoder = JSONDecoder()
+        let decoded = try decoder.decode(MetronomePreset.self, from: encodedData)
+
+        #expect(decoded.name == "Complex Polyrhythm Preset")
+        #expect(decoded.bpm == 135.0)
+        #expect(decoded.pattern == customPattern)
+        #expect(decoded.pattern?.steps == customPattern.steps)
+        #expect(decoded.downbeatPitchSemitones == 12.0)
+
+        // 2. Backward compatibility test: decode legacy JSON payload without pattern and downbeatPitchSemitones
+        let legacyJSON = """
+        {
+            "id": "\(UUID().uuidString)",
+            "name": "Legacy Preset",
+            "bpm": 128.0,
+            "timeSignature": {
+                "beatsPerMeasure": 4,
+                "beatValue": 4
+            },
+            "subdivision": "quarter",
+            "grooveFeel": {
+                "shuffleRatio": 0.5
+            },
+            "downbeatPitchMultiplier": 1.5,
+            "timbre": "woodblock",
+            "createdAt": 748000000.0,
+            "updatedAt": 748000000.0
+        }
+        """
+
+        let legacyData = legacyJSON.data(using: .utf8)!
+        let legacyDecoded = try decoder.decode(MetronomePreset.self, from: legacyData)
+        #expect(legacyDecoded.name == "Legacy Preset")
+        #expect(legacyDecoded.bpm == 128.0)
+        #expect(legacyDecoded.pattern == nil)
+        #expect(legacyDecoded.downbeatPitchSemitones == nil)
+    }
 }

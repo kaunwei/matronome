@@ -1,3 +1,9 @@
+[2026-10-07 23:40:00] [TASK-018] [SUCCESS]
+- Target: Sources/MetronomeCore/Rhythm/{BeatEmphasis,MeasurePattern}.swift, Sources/MetronomeCore/State/PresetSlotManager.swift, Sources/MetronomeApp/ViewModels/MetronomeViewModel.swift, Tests/MetronomeCoreTests/StateTests.swift
+- Scope: Made BeatEmphasis and MeasurePattern conform to Codable. Extended MetronomePreset to snapshot full pattern: MeasurePattern? and downbeatPitchSemitones: Double? with backward-compatible custom decoding. Updated MetronomeViewModel save/overwrite/recall to persist and restore custom pattern steps, audio engine pattern, and pitch offset. Added pattern serialization and legacy JSON decoding tests.
+- Verify: swift test && bash scripts/build_app.sh passed 100% (35/35 unit tests passed, macOS app bundle rebuilt and verified).
+- Confidence: 5/5 (Full snapshot fidelity, 100% backward compatibility, exact pattern emphasis restoration verified).
+
 [2026-10-07 23:34:00] [TASK-017] [SUCCESS]
 - Target: scripts/build_app.sh, Sources/MetronomeCore/Audio/MetronomeAudioEngine.swift
 - Scope: Removed NSMicrophoneUsageDescription completely from Info.plist generation in scripts/build_app.sh to eliminate macOS TCC microphone permission prompts. Verified MetronomeAudioEngine is strictly output-only (attaching and connecting only playerNode & droneNode to mainMixerNode/outputNode without referencing inputNode).

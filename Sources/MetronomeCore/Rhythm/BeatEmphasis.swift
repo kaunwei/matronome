@@ -1,7 +1,7 @@
 import Foundation
 
 /// The accent level assigned to a specific pulse within a measure.
-public enum BeatEmphasis: String, CaseIterable, Equatable, Hashable, Sendable {
+public enum BeatEmphasis: String, Codable, CaseIterable, Equatable, Hashable, Sendable {
     case downbeat
     case accent
     case normal

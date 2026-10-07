@@ -398,6 +398,13 @@ public final class MetronomeViewModel: ObservableObject {
         self.subdivision = preset.subdivision
         self.grooveFeel = preset.grooveFeel
         self.timbre = preset.timbre
+        if let restoredPattern = preset.pattern {
+            self.pattern = restoredPattern
+            self.engine.setPattern(restoredPattern)
+        }
+        if let restoredPitch = preset.downbeatPitchSemitones {
+            self.downbeatPitchSemitones = restoredPitch
+        }
         self.selectedPresetId = preset.id
         self.reloadPresets()
     }
@@ -412,7 +419,9 @@ public final class MetronomeViewModel: ObservableObject {
             subdivision: self.subdivision,
             grooveFeel: self.grooveFeel,
             downbeatPitchMultiplier: 1.5,
-            timbre: self.timbre
+            timbre: self.timbre,
+            pattern: self.pattern,
+            downbeatPitchSemitones: self.downbeatPitchSemitones
         )
         presetSlotManager.add(newPreset)
         _ = presetSlotManager.recall(id: newPreset.id)
@@ -430,6 +439,8 @@ public final class MetronomeViewModel: ObservableObject {
             grooveFeel: self.grooveFeel,
             downbeatPitchMultiplier: existing.downbeatPitchMultiplier,
             timbre: self.timbre,
+            pattern: self.pattern,
+            downbeatPitchSemitones: self.downbeatPitchSemitones,
             createdAt: existing.createdAt,
             updatedAt: Date()
         )

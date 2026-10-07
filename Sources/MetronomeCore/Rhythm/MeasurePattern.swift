@@ -1,7 +1,7 @@
 import Foundation
 
 /// Defines the per-pulse emphasis structure of a single measure.
-public struct MeasurePattern: Equatable, Hashable, Sendable {
+public struct MeasurePattern: Codable, Equatable, Hashable, Sendable {
     public let timeSignature: TimeSignature
     public let subdivision: Subdivision
     public var steps: [BeatEmphasis]

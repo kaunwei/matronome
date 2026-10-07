@@ -10,6 +10,8 @@ public struct MetronomePreset: Codable, Equatable, Identifiable, Sendable {
     public var grooveFeel: GrooveFeel
     public var downbeatPitchMultiplier: Float
     public var timbre: Timbre
+    public var pattern: MeasurePattern?
+    public var downbeatPitchSemitones: Double?
     public var createdAt: Date
     public var updatedAt: Date
 
@@ -22,6 +24,8 @@ public struct MetronomePreset: Codable, Equatable, Identifiable, Sendable {
         grooveFeel: GrooveFeel = .straight,
         downbeatPitchMultiplier: Float = 1.5,
         timbre: Timbre = .woodblock,
+        pattern: MeasurePattern? = nil,
+        downbeatPitchSemitones: Double? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
@@ -33,8 +37,41 @@ public struct MetronomePreset: Codable, Equatable, Identifiable, Sendable {
         self.grooveFeel = grooveFeel
         self.downbeatPitchMultiplier = downbeatPitchMultiplier
         self.timbre = timbre
+        self.pattern = pattern
+        self.downbeatPitchSemitones = downbeatPitchSemitones
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case bpm
+        case timeSignature
+        case subdivision
+        case grooveFeel
+        case downbeatPitchMultiplier
+        case timbre
+        case pattern
+        case downbeatPitchSemitones
+        case createdAt
+        case updatedAt
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.bpm = try container.decode(Double.self, forKey: .bpm)
+        self.timeSignature = try container.decode(TimeSignature.self, forKey: .timeSignature)
+        self.subdivision = try container.decode(Subdivision.self, forKey: .subdivision)
+        self.grooveFeel = try container.decode(GrooveFeel.self, forKey: .grooveFeel)
+        self.downbeatPitchMultiplier = try container.decode(Float.self, forKey: .downbeatPitchMultiplier)
+        self.timbre = try container.decode(Timbre.self, forKey: .timbre)
+        self.pattern = try container.decodeIfPresent(MeasurePattern.self, forKey: .pattern)
+        self.downbeatPitchSemitones = try container.decodeIfPresent(Double.self, forKey: .downbeatPitchSemitones)
+        self.createdAt = try container.decode(Date.self, forKey: .createdAt)
+        self.updatedAt = try container.decode(Date.self, forKey: .updatedAt)
     }
 }
 
