@@ -26,9 +26,6 @@ public struct PracticeTimeHeader: View {
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.accentColor)
                 
-                // Playback status badge
-                statusBadge
-                
                 Spacer()
                 
                 // Practice Stats Cluster - Monospaced Fixed-Width Pills
@@ -161,24 +158,7 @@ public struct PracticeTimeHeader: View {
         )
     }
     
-    // MARK: - Status Badge
-    private var statusBadge: some View {
-        HStack(spacing: 5) {
-            Circle()
-                .fill(viewModel.playbackState == .playing ? Color.green : (viewModel.playbackState == .paused ? Color.yellow : Color.secondary))
-                .frame(width: 7, height: 7)
-            
-            Text(viewModel.playbackState.statusText)
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .foregroundColor(.secondary)
-        }
-        .padding(.horizontal, 7)
-        .padding(.vertical, 3)
-        .background(
-            Capsule()
-                .fill(Color.secondary.opacity(0.1))
-        )
-    }
+
     
     // MARK: - Target Countdown Drawer
     private var targetCountdownDrawer: some View {
@@ -304,16 +284,6 @@ public struct PracticeTimeHeader: View {
             return "\(mins)m \(String(format: "%02d", secs))s"
         } else {
             return "\(secs)s"
-        }
-    }
-}
-
-private extension MetronomePlaybackState {
-    var statusText: String {
-        switch self {
-        case .playing: return "PLAYING"
-        case .paused:  return "PAUSED"
-        case .stopped: return "STOPPED"
         }
     }
 }

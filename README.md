@@ -1,76 +1,67 @@
-# 24-Hour Unattended AI Development Framework
+# Metronome for macOS
 
-A plug-and-play, dual-terminal decoupled AI development framework designed for 24-hour unattended autonomous code generation, verification, and linear integration.
-
----
-
-## Architecture Overview
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                 Terminal A: Interactive Architect           │
-│  • Human + High-IQ AI (Gemini 3.7 / Claude Sonnet).         │
-│  • Discuss requirements, groom domain models.               │
-│  • Decompose goals into single-line atomic English tasks.   │
-│  • Inspects progress.log (<=10 lines) for zero pollution.   │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ (FIFO tasks.txt)
-┌──────────────────────────────▼──────────────────────────────┐
-│                 Terminal B: Unattended Background Worker    │
-│  • worker.sh daemon polls tasks.txt continuously.           │
-│  • Invokes cheap Flash models via agy CLI.                  │
-│  • Enforces .skills/universal-build-verify.md SOP.          │
-│  • Executes builds (C++/Python), unit tests, GUI smoke tests.│
-│  • Max 3 repair attempts -> auto rollback on failure.       │
-│  • Auto Git Commit & prepends summary to progress.log.      │
-└─────────────────────────────────────────────────────────────┘
-```
+A high-precision, low-latency, modular metronome and rhythm training suite designed natively for macOS with Swift and SwiftUI.
 
 ---
 
-## File Structure
+## Key Features
 
-- **`worker.sh`**: Background daemon loop with PID lock, watchdog timer (600s), rate-limit backoff, and clean rollback.
-- **`.skills/universal-build-verify.md`**: Universal SOP for background workers (security guardrails, C++/Python/GUI verification, 3-retry limit, auto-commit).
-- **`AGENTS.md` / `GEMINI.md`**: Master rules, atomic task schema, safe git log rules, and linear rebase guidelines.
-- **`docs/PORTING_GUIDE.md`**: Autonomous porting manual for external AIs to migrate this framework to any repository without human copy-pasting.
-- **`tasks.txt`**: FIFO task queue (single-line atomic English contracts).
-- **`tasks.done`**: Completed task history log.
-- **`progress.log`**: Latest verification reports (newest prepended at top).
-- **`worker.status`**: Real-time worker heartbeat JSON.
+### ⏱️ Precision Audio & Sound Synthesis
+- **Zero-Latency PCM Audio Engine**: Built on `AVAudioEngine` for sample-accurate pulse generation without timing drift.
+- **Multiple Sound Profiles**: Built-in sound packs including Digital synth, Woodblock, Mechanical click, Modern Beep, and Cowbell.
+- **Downbeat Pitch Tuning**: Independent frequency control and pitch accents for Beat 1, standard beats, and subdivisions.
+
+### 🎼 Advanced Time Signatures & Polyrhythmic Meter
+- **Arbitrary Time Signatures**: Supports standard, odd, and non-standard meters including irregular rational fractions such as `3/3`, `5/4`, `7/8`, and `11/16`.
+- **Dynamic Beat Slots**: Interactive per-beat indicators supporting accent, normal, ghost, and mute states.
+- **Subdivisions & 6-Tuplets**: Seamlessly switch between Quarter, 8th, Triplet, 16th, Quintuplet, Sextuplet (6-tuplet), Septuplet, and 32nd subdivisions.
+- **Shuffle & Swing Engine**: Smoothly adjustable swing ratio from straight time to hard triplet groove.
+
+### 🏋️ Practice Suite & Rhythm Trainers
+- **Speed Trainer**: Automatically ramps tempo up or down across bars to build technical facility.
+- **Gap Trainer**: Cycles audible and silent bars to test and strengthen internal timekeeping.
+- **Goal Countdown Timer**: Built-in target session timer with preset and custom durations (5m, 15m, 30m, 60m).
+
+### 📊 Practice Tracking & Analytics
+- **Practice Time Header**: Streamlined header tracking Session, Weekly, and Lifetime practice totals.
+- **Weekly Reset**: Track weekly progress goals with manual or automatic resets.
+- **14-Day Trends**: Visual 14-day history and consistency charts to maintain regular practice habits.
 
 ---
 
-## Quick Start Guide
+## Architecture & Project Structure
 
-### Terminal A (Architect / Human Discussion):
-1. Discuss features with the AI in Terminal A.
-2. Direct the AI to generate atomic tasks into `tasks.txt`.
-3. Check `progress.log` to review completed deliverables.
-
-### Terminal B (Background Worker):
-Start the unattended worker:
-```bash
-./worker.sh
 ```
-
-To run with a specific model or timeout:
-```bash
-AI_MODEL=gemini-3.7-flash-medium TASK_TIMEOUT=900 ./worker.sh
-```
-
-### Emergency Pause:
-To safely pause the worker after the current task finishes:
-```bash
-touch PAUSE
-```
-To resume:
-```bash
-rm PAUSE
+.
+├── Sources/
+│   ├── MetronomeCore/       # Audio engine, sound synthesis, time signature models, trainers
+│   └── MetronomeApp/        # SwiftUI views, view models, visualizers, practice header
+├── Tests/
+│   ├── MetronomeCoreTests/  # Unit & timing verification tests
+│   └── MetronomeAppTests/   # UI logic & view model tests
+└── docs/
+    └── SPEC.md              # Detailed technical specification
 ```
 
 ---
 
-## Porting to Other Projects
+## Building and Running
 
-To port this framework to another project, point your AI assistant to [docs/PORTING_GUIDE.md](file:///home/kw/workspace/auto_script/docs/PORTING_GUIDE.md). The AI will autonomously inspect your target repository, merge rules non-destructively into your `AGENTS.md`, and drop in the worker components.
+### Requirements
+- macOS 13.0+
+- Swift 5.9+ / Xcode 15+
+
+### Build & Test via Swift CLI
+```bash
+# Build the project
+swift build
+
+# Run unit and integration tests
+swift test
+```
+
+---
+
+## Specification
+
+For the complete technical specification, refer to [docs/SPEC.md](file:///Volumes/Vault500G/workspace/matronome/docs/SPEC.md).

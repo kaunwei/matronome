@@ -1,3 +1,9 @@
+[2026-10-07 03:00:00] [TASK-012] [SUCCESS]
+- Target: Sources/MetronomeApp/Views/Header/PracticeTimeHeader.swift, docs/SPEC.md, README.md
+- Scope: Removed statusBadge (playback status & dot indicator) completely from PracticeTimeHeader for a cleaner header. Authored comprehensive product specification in docs/SPEC.md and updated README.md covering PCM synthesis, downbeat pitch tuning, custom/odd time signatures (3/3), 6-tuplets, shuffle, dynamic slots, weekly reset, 14-day trends, and speed/gap trainers.
+- Verify: swift test && swift build passed 100% (34/34 tests).
+- Confidence: 5/5 (Clean macOS UI header, comprehensive Markdown product docs, full build/test pass).
+
 [2026-10-07 02:55:00] [TASK-011] [SUCCESS]
 - Target: Sources/MetronomeApp/Views/Header/PracticeTimeHeader.swift, Sources/MetronomeApp/Views/Core/MeasurePatternEditorView.swift
 - Scope: Removed text 'Metronome' from PracticeTimeHeader keeping only the icon. Enabled visible horizontal scroll indicators (`showsIndicators: true`) in MeasurePatternEditorView, added dynamic step tile compaction (28pt width, scaled icon & font, reduced spacing) when subdivision has 6 pulses to prevent cutoffs and ensure smooth horizontal scrolling for 6-tuplets and long measures.
