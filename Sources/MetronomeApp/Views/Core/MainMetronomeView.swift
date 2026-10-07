@@ -16,7 +16,10 @@ public struct MainMetronomeView: View {
                 // 1. Practice Time & Status Header (Session, Weekly Reset, Target Countdown)
                 PracticeTimeHeader(viewModel: viewModel)
                 
-                // 2. High-Visibility Beat LEDs Indicator
+                // 2. Dynamic 2-Column Preset Slots Bar (Hotkeys 1-9, Elongated Cards, Scrollable)
+                PresetSlotsBar(viewModel: viewModel)
+                
+                // 3. High-Visibility Beat LEDs Indicator
                 BeatLEDsView(viewModel: viewModel)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
@@ -26,7 +29,7 @@ public struct MainMetronomeView: View {
                             .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
                     )
                 
-                // 3. Integrated Tempo & Transport Centerpiece (BPM + Start/Pause + Tap)
+                // 4. Integrated Tempo & Transport Centerpiece (BPM + Start/Pause + Tap)
                 BPMDialView(viewModel: viewModel)
                     .background(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -34,7 +37,7 @@ public struct MainMetronomeView: View {
                             .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
                     )
                 
-                // 4. Rhythm Settings (Customizable Time Signature, Subdivision, Groove/Shuffle)
+                // 5. Rhythm Settings (Customizable Time Signature, Subdivision, Groove/Shuffle)
                 RhythmSettingsView(viewModel: viewModel)
                     .padding(16)
                     .background(
@@ -43,11 +46,8 @@ public struct MainMetronomeView: View {
                             .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
                     )
                 
-                // 5. Interactive Measure Pattern Editor (Per-beat toggle downbeat/accent/mute)
+                // 6. Interactive Measure Pattern Editor (Per-beat toggle downbeat/accent/mute)
                 MeasurePatternEditorView(viewModel: viewModel)
-                
-                // 6. Dynamic 2-Column Preset Slots Bar (Hotkeys 1-9, Elongated Cards, Scrollable)
-                PresetSlotsBar(viewModel: viewModel)
                 
                 // 7. Collapsible Pro Tools Drawer (Speed Trainer, Gap Trainer, Practice Stats)
                 ProToolsDrawerView(viewModel: viewModel)

@@ -27,14 +27,14 @@ public struct BPMDialView: View {
     }
     
     public var body: some View {
-        VStack(spacing: 14) {
-            // Top: Italian tempo marking badge
+        VStack(spacing: 10) {
+            // Top: Italian tempo marking badge & Tap Tempo
             HStack {
                 Text(viewModel.tempoMarking)
-                    .font(.system(size: 13, weight: .bold, design: .serif))
+                    .font(.system(size: 12, weight: .bold, design: .serif))
                     .italic()
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 3)
                     .background(
                         Capsule()
                             .fill(Color.accentColor.opacity(0.12))
@@ -53,10 +53,10 @@ public struct BPMDialView: View {
                         Text("TAP")
                             .font(.system(size: 11, weight: .bold, design: .rounded))
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 4)
                     .background(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
                             .fill(viewModel.tapTempoTriggered ? Color.accentColor.opacity(0.3) : Color.secondary.opacity(0.12))
                     )
                     .foregroundColor(viewModel.tapTempoTriggered ? .accentColor : .primary)
@@ -69,9 +69,9 @@ public struct BPMDialView: View {
             }
             
             // Middle: BPM Number & Integrated Play/Pause Button
-            HStack(spacing: 20) {
+            HStack(spacing: 16) {
                 // BPM Display (Click to edit)
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 0) {
                     if isEditingDirect {
                         TextField("BPM", text: directBpmBinding, onCommit: {
                             if let val = Double(directBpmString) {
@@ -79,13 +79,13 @@ public struct BPMDialView: View {
                             }
                             isEditingDirect = false
                         })
-                        .font(.system(size: 64, weight: .heavy, design: .rounded))
-                        .frame(width: 140)
+                        .font(.system(size: 40, weight: .heavy, design: .rounded))
+                        .frame(width: 100)
                         .textFieldStyle(.plain)
                     } else {
-                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        HStack(alignment: .firstTextBaseline, spacing: 5) {
                             Text("\(Int(viewModel.bpm))")
-                                .font(.system(size: 64, weight: .heavy, design: .rounded))
+                                .font(.system(size: 40, weight: .heavy, design: .rounded))
                                 .contentTransition(.numericText())
                                 .onTapGesture {
                                     directBpmString = "\(Int(viewModel.bpm))"
@@ -94,7 +94,7 @@ public struct BPMDialView: View {
                                 .help("Click to type BPM directly")
                             
                             Text("BPM")
-                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
                                 .foregroundColor(.secondary)
                         }
                     }
@@ -106,25 +106,25 @@ public struct BPMDialView: View {
                 Button(action: {
                     viewModel.togglePlayPause()
                 }) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 6) {
                         Image(systemName: viewModel.playbackState == .playing ? "pause.fill" : "play.fill")
-                            .font(.system(size: 20, weight: .bold))
+                            .font(.system(size: 16, weight: .bold))
                             .offset(x: viewModel.playbackState == .playing ? 0 : 1)
                         
                         Text(viewModel.playbackState == .playing ? "PAUSE" : "START")
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
                     }
                     .foregroundColor(.white)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 14)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 9)
                     .background(
                         Capsule()
                             .fill(viewModel.playbackState == .playing ? Color.orange : Color.accentColor)
                             .shadow(
-                                color: (viewModel.playbackState == .playing ? Color.orange : Color.accentColor).opacity(0.4),
-                                radius: 8,
+                                color: (viewModel.playbackState == .playing ? Color.orange : Color.accentColor).opacity(0.35),
+                                radius: 6,
                                 x: 0,
-                                y: 3
+                                y: 2
                             )
                     )
                 }
@@ -157,7 +157,7 @@ public struct BPMDialView: View {
                 stepperButton(label: "+10", delta: 10)
             }
         }
-        .padding(16)
+        .padding(12)
     }
     
     private func stepperButton(label: String, delta: Double, isPrimary: Bool = false) -> some View {
