@@ -169,10 +169,6 @@ public struct PresetSlotsBar: View {
         }
         .buttonStyle(.plain)
         .contextMenu {
-            Button("Recall Preset") {
-                viewModel.recallPreset(preset)
-            }
-            
             Button("Overwrite with Current Settings") {
                 viewModel.overwritePresetWithCurrentState(id: preset.id)
             }
