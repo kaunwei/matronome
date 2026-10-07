@@ -1,3 +1,15 @@
+[2026-10-07 03:07:00] [TASK-014] [SUCCESS]
+- Target: scripts/generate_icon.py, scripts/build_app.sh, build/Metronome.app
+- Scope: Created scripts/generate_icon.py generating 1024x1024 macOS metronome icon with warm walnut body, metallic pendulum, brass weight, tempo scale and neon beat LEDs. Compiled full iconset (16px-1024px) to AppIcon.icns via iconutil. Updated build_app.sh to bundle icon into Contents/Resources and configure CFBundleIconFile in Info.plist.
+- Verify: test -f build/Metronome.app/Contents/Resources/AppIcon.icns && bash scripts/build_app.sh passed 100% (34/34 tests passed).
+- Confidence: 5/5 (Native macOS .icns bundled, full resolution iconset verified, automated build script integration tested).
+
+[2026-10-07 03:03:00] [TASK-013] [SUCCESS]
+- Target: scripts/build_app.sh, Package.swift
+- Scope: Implemented standalone release build and macOS application packaging script scripts/build_app.sh. Invokes `swift build -c release`, structures `build/Metronome.app` bundle with Info.plist (APPL, LSMinimumSystemVersion, CFBundleExecutable) and PkgInfo, and packages portable distribution archive `build/Metronome.zip`.
+- Verify: bash scripts/build_app.sh && test -d build/Metronome.app && test -f build/Metronome.zip passed 100%.
+- Confidence: 5/5 (Executable bundle verified, full Info.plist and directory layout validated, zip package created).
+
 [2026-10-07 03:00:00] [TASK-012] [SUCCESS]
 - Target: Sources/MetronomeApp/Views/Header/PracticeTimeHeader.swift, docs/SPEC.md, README.md
 - Scope: Removed statusBadge (playback status & dot indicator) completely from PracticeTimeHeader for a cleaner header. Authored comprehensive product specification in docs/SPEC.md and updated README.md covering PCM synthesis, downbeat pitch tuning, custom/odd time signatures (3/3), 6-tuplets, shuffle, dynamic slots, weekly reset, 14-day trends, and speed/gap trainers.

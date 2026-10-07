@@ -29,7 +29,11 @@ CONTENTS_DIR="${APP_DIR}/Contents"
 MACOS_DIR="${CONTENTS_DIR}/MacOS"
 RESOURCES_DIR="${CONTENTS_DIR}/Resources"
 
-echo "[2/4] Assembling .app bundle structure in ${APP_DIR}..."
+# Generate high-resolution macOS application icon if not already present or refresh it
+echo "[2/5] Generating application icon..."
+python3 "${SCRIPT_DIR}/generate_icon.py"
+
+echo "[3/5] Assembling .app bundle structure in ${APP_DIR}..."
 rm -rf "${APP_DIR}"
 mkdir -p "${MACOS_DIR}" "${RESOURCES_DIR}"
 
@@ -37,8 +41,13 @@ mkdir -p "${MACOS_DIR}" "${RESOURCES_DIR}"
 cp "${EXECUTABLE}" "${MACOS_DIR}/MetronomeApp"
 chmod +x "${MACOS_DIR}/MetronomeApp"
 
-# 3. Create Info.plist
-echo "[3/4] Generating Info.plist..."
+# Copy AppIcon.icns into Contents/Resources
+if [[ -f "${BUILD_DIR}/AppIcon.icns" ]]; then
+    cp "${BUILD_DIR}/AppIcon.icns" "${RESOURCES_DIR}/AppIcon.icns"
+fi
+
+# 4. Create Info.plist
+echo "[4/5] Generating Info.plist..."
 cat << 'EOF' > "${CONTENTS_DIR}/Info.plist"
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -48,6 +57,8 @@ cat << 'EOF' > "${CONTENTS_DIR}/Info.plist"
     <string>en</string>
     <key>CFBundleExecutable</key>
     <string>MetronomeApp</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
     <string>com.matronome.MetronomeApp</string>
     <key>CFBundleInfoDictionaryVersion</key>
@@ -75,8 +86,8 @@ EOF
 # Create PkgInfo
 echo "APPL????" > "${CONTENTS_DIR}/PkgInfo"
 
-# 4. Create Portable Archive
-echo "[4/4] Creating portable archive build/Metronome.zip..."
+# 5. Create Portable Archive
+echo "[5/5] Creating portable archive build/Metronome.zip..."
 (
     cd "${BUILD_DIR}"
     rm -f "Metronome.zip"
