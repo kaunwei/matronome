@@ -177,7 +177,7 @@ public final class MetronomeEngine: @unchecked Sendable {
         guard state == .playing else { return }
 
         stopTimerLoop()
-        practiceTracker.pause()
+        practiceTracker.pause(tempo: activeTempo.bpm)
         practiceTargetTimer.pause()
 
         state = .paused

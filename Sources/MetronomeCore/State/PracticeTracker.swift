@@ -86,16 +86,36 @@ public final class PracticeTracker: @unchecked Sendable {
         sessionStartTime = Date()
     }
 
-    /// Pauses practice time tracking.
-    public func pause() {
+    /// Pauses practice time tracking, records the elapsed session duration into persisted total practice time and session history, and resets current session practice time to 0.
+    @discardableResult
+    public func pause(tempo: Double = 120.0, notes: String? = nil) -> PracticeSession? {
         lock.lock()
         defer { lock.unlock() }
-        guard isRunningInternal else { return }
+        guard isRunningInternal else { return nil }
+
+        var finalDuration = accumulatedSessionTime
         if let startTime = sessionStartTime {
-            accumulatedSessionTime += Date().timeIntervalSince(startTime)
-            sessionStartTime = nil
+            finalDuration += Date().timeIntervalSince(startTime)
         }
+
         isRunningInternal = false
+        sessionStartTime = nil
+        accumulatedSessionTime = 0
+
+        guard finalDuration > 0 else { return nil }
+
+        persistedTotalPracticeTime += finalDuration
+
+        let session = PracticeSession(
+            date: Date(),
+            duration: finalDuration,
+            tempo: tempo,
+            notes: notes
+        )
+        sessions.append(session)
+        savePersistedData()
+
+        return session
     }
 
     /// Stops practice tracking, logs the completed session, and accumulates total practice time.

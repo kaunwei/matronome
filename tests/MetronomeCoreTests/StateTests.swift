@@ -21,22 +21,31 @@ struct StateTests {
         Thread.sleep(forTimeInterval: 0.05)
         #expect(tracker.currentPracticeTime >= 0.04)
 
-        tracker.pause()
+        // Pausing resets current session practice time to 0 and records it into totalPracticeTime and sessionHistory
+        let pausedSession = tracker.pause(tempo: 120.0, notes: "First segment")
         #expect(!tracker.isRunning)
-        let pausedDuration = tracker.currentPracticeTime
-        #expect(pausedDuration >= 0.04)
+        #expect(tracker.currentPracticeTime == 0)
+        #expect(tracker.totalPracticeTime >= 0.04)
+        #expect(tracker.sessionHistory.count == 1)
+        #expect(pausedSession != nil)
+        #expect(pausedSession?.notes == "First segment")
 
-        // Resuming
+        // Resuming starts counting current session from 0 while total continues growing
         tracker.start()
+        #expect(tracker.isRunning)
         Thread.sleep(forTimeInterval: 0.05)
+        #expect(tracker.currentPracticeTime >= 0.04)
+        #expect(tracker.totalPracticeTimeWithCurrentSession >= 0.09)
+
         let session = tracker.stop(tempo: 130.0, notes: "Warmup routine")
         #expect(!tracker.isRunning)
+        #expect(tracker.currentPracticeTime == 0)
         #expect(session != nil)
         #expect(session?.tempo == 130.0)
         #expect(session?.notes == "Warmup routine")
-        #expect((session?.duration ?? 0) >= 0.09)
+        #expect((session?.duration ?? 0) >= 0.04)
         #expect(tracker.totalPracticeTime >= 0.09)
-        #expect(tracker.sessionHistory.count == 1)
+        #expect(tracker.sessionHistory.count == 2)
 
         // Verify persistence by initializing a new tracker instance with same defaults
         let restoredTracker = PracticeTracker(
@@ -45,13 +54,47 @@ struct StateTests {
             sessionsKey: "test_sessions"
         )
         #expect(restoredTracker.totalPracticeTime == tracker.totalPracticeTime)
-        #expect(restoredTracker.sessionHistory.count == 1)
-        #expect(restoredTracker.sessionHistory.first?.notes == "Warmup routine")
+        #expect(restoredTracker.sessionHistory.count == 2)
+        #expect(restoredTracker.sessionHistory.first?.notes == "First segment")
+        #expect(restoredTracker.sessionHistory.last?.notes == "Warmup routine")
 
         // Reset
         restoredTracker.resetAll()
         #expect(restoredTracker.totalPracticeTime == 0)
         #expect(restoredTracker.sessionHistory.isEmpty)
+    }
+
+    @Test func testMetronomeEnginePauseCommitsPracticeTracker() throws {
+        let tracker = PracticeTracker(userDefaults: nil)
+        let engine = MetronomeEngine(practiceTracker: tracker, tempo: Tempo(bpm: 120))
+
+        try engine.start()
+        #expect(tracker.isRunning)
+        Thread.sleep(forTimeInterval: 0.05)
+        #expect(tracker.currentPracticeTime >= 0.04)
+
+        engine.pause()
+        #expect(!tracker.isRunning)
+        #expect(engine.state == .paused)
+        #expect(tracker.currentPracticeTime == 0)
+        #expect(tracker.totalPracticeTime >= 0.04)
+        #expect(tracker.sessionHistory.count == 1)
+        #expect(tracker.sessionHistory.first?.tempo == 120.0)
+
+        // Resuming starts counting from 0 while total continues growing
+        try engine.start()
+        #expect(tracker.isRunning)
+        #expect(engine.state == .playing)
+        Thread.sleep(forTimeInterval: 0.05)
+        #expect(tracker.currentPracticeTime >= 0.04)
+        #expect(tracker.totalPracticeTimeWithCurrentSession >= 0.09)
+
+        engine.stop()
+        #expect(!tracker.isRunning)
+        #expect(engine.state == .stopped)
+        #expect(tracker.currentPracticeTime == 0)
+        #expect(tracker.totalPracticeTime >= 0.09)
+        #expect(tracker.sessionHistory.count == 2)
     }
 
     @Test func testPracticeTrackerThreadSafety() {

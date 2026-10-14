@@ -266,12 +266,14 @@ public final class MetronomeViewModel: ObservableObject {
     public func pause() {
         engine.pause()
         playbackState = .paused
+        updatePracticeStats()
     }
     
     public func stop() {
         engine.stop()
         playbackState = .stopped
         resetVisuals()
+        updatePracticeStats()
     }
     
     // MARK: - Tap Tempo

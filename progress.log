@@ -1,3 +1,9 @@
+[2026-10-14 23:13:30] [TASK-019] [SUCCESS]
+- Target: Sources/MetronomeCore/State/PracticeTracker.swift, Sources/MetronomeCore/Engine/MetronomeEngine.swift, Sources/MetronomeApp/ViewModels/MetronomeViewModel.swift, tests/MetronomeCoreTests/StateTests.swift
+- Scope: Updated PracticeTracker.pause() to commit elapsed session duration into persistedTotalPracticeTime and sessionHistory, and reset currentPracticeTime to 0. Updated MetronomeEngine.pause() to invoke committing pause(tempo: activeTempo.bpm). Updated MetronomeViewModel.pause() & stop() to immediately call updatePracticeStats(). Updated StateTests.swift to verify pause() resets currentPracticeTime to 0 while totalPracticeTime accumulates, and that resuming start() counts from 0 while total continues growing.
+- Verify: swift test && bash scripts/build_app.sh passed 100% (36/36 unit tests passed, macOS app bundle rebuilt and verified).
+- Confidence: 5/5 (Thread-safe committing pause, 00:00 session reset, continuous total accumulation verified).
+
 [2026-10-07 23:40:00] [TASK-018] [SUCCESS]
 - Target: Sources/MetronomeCore/Rhythm/{BeatEmphasis,MeasurePattern}.swift, Sources/MetronomeCore/State/PresetSlotManager.swift, Sources/MetronomeApp/ViewModels/MetronomeViewModel.swift, Tests/MetronomeCoreTests/StateTests.swift
 - Scope: Made BeatEmphasis and MeasurePattern conform to Codable. Extended MetronomePreset to snapshot full pattern: MeasurePattern? and downbeatPitchSemitones: Double? with backward-compatible custom decoding. Updated MetronomeViewModel save/overwrite/recall to persist and restore custom pattern steps, audio engine pattern, and pitch offset. Added pattern serialization and legacy JSON decoding tests.
