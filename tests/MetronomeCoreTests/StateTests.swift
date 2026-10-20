@@ -152,6 +152,55 @@ struct StateTests {
         #expect(!timer.isFinished)
     }
 
+    @Test func testPracticeTargetTimerDecrementsAtExactOneSecondPerSecond() {
+        final class SimulatedClock: @unchecked Sendable {
+            var currentTime: TimeInterval = 1000.0
+        }
+        let clock = SimulatedClock()
+        let timer = PracticeTargetTimer(targetDuration: 10.0, timeProvider: { clock.currentTime })
+
+        #expect(timer.remainingTime == 10.0)
+        #expect(timer.progress == 0.0)
+
+        timer.start()
+        #expect(timer.remainingTime == 10.0)
+
+        // Advance simulated monotonic clock by exactly 1.0 second
+        clock.currentTime += 1.0
+        #expect(abs(timer.remainingTime - 9.0) < 1e-4)
+        #expect(abs(timer.progress - 0.1) < 1e-4)
+
+        // Tick at 1.0s elapsed
+        timer.tick()
+        #expect(abs(timer.remainingTime - 9.0) < 1e-4)
+
+        // Advance by another 1.0 second (total 2.0s elapsed)
+        clock.currentTime += 1.0
+        #expect(abs(timer.remainingTime - 8.0) < 1e-4)
+        #expect(abs(timer.progress - 0.2) < 1e-4)
+
+        // Multiple rapid intermediate ticks within 1 second should not cause drift or double decrement
+        clock.currentTime += 0.25
+        timer.tick()
+        clock.currentTime += 0.25
+        timer.tick()
+        clock.currentTime += 0.5
+        timer.tick()
+
+        // Total 3.0s elapsed -> exactly 7.0s remaining
+        #expect(abs(timer.remainingTime - 7.0) < 1e-4)
+        #expect(abs(timer.progress - 0.3) < 1e-4)
+        #expect(!timer.isFinished)
+
+        // Advance to 0
+        clock.currentTime += 7.0
+        timer.tick()
+        #expect(timer.remainingTime == 0.0)
+        #expect(timer.progress == 1.0)
+        #expect(timer.isFinished)
+        #expect(!timer.isRunning)
+    }
+
     // MARK: - PracticeStats Tests
     @Test func testPracticeStatsCalculations() {
         let cal = Calendar.current

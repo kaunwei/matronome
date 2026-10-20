@@ -102,4 +102,27 @@ struct AudioTests {
             engine.scheduleBuffer(buf)
         }
     }
+
+    @Test func testMetronomeAudioEngineGraphReconstruction() {
+        let engine = MetronomeAudioEngine()
+        let configFired = TestBox(false)
+        engine.onConfigurationChange = {
+            configFired.mutate { $0 = true }
+        }
+
+        #expect(engine.engine.attachedNodes.contains(engine.playerNode))
+        #expect(engine.engine.attachedNodes.contains(engine.droneNode))
+
+        // Safely trigger graph reconstruction
+        engine.reconstructGraph()
+
+        #expect(engine.engine.attachedNodes.contains(engine.playerNode))
+        #expect(engine.engine.attachedNodes.contains(engine.droneNode))
+        #expect(engine.audioFormat.sampleRate > 0)
+        #expect(engine.audioFormat.channelCount > 0)
+
+        // Buffers can still be generated after reconstruction
+        let cached = engine.createCachedBuffers()
+        #expect(cached.count == 4)
+    }
 }

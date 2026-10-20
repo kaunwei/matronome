@@ -1,5 +1,8 @@
 import Foundation
 import AVFAudio
+#if os(macOS)
+import AppKit
+#endif
 
 /// High-level state representing the playback condition of the MetronomeEngine.
 public enum MetronomePlaybackState: Equatable, Sendable {
@@ -117,6 +120,12 @@ public final class MetronomeEngine: @unchecked Sendable {
     private var totalCompletedMeasures: Int = 0
     private var cachedBuffers: [BeatEmphasis: AVAudioPCMBuffer] = [:]
 
+    // Audio reset & notification observers
+    private var notificationObservers: [NSObjectProtocol] = []
+    private let audioResetQueue = DispatchQueue(label: "com.metronome.engine.audioReset", qos: .userInitiated)
+    private var lastResetUptime: TimeInterval = 0
+    private var isRebuildingGraph: Bool = false
+
     public init(
         audioEngine: MetronomeAudioEngine = MetronomeAudioEngine(),
         scheduler: RhythmEventScheduler = RhythmEventScheduler(),
@@ -144,9 +153,16 @@ public final class MetronomeEngine: @unchecked Sendable {
             guard let self = self else { return }
             self.stop()
         }
+
+        // Setup audio notification observers and engine configuration change callback
+        self.audioEngine.onConfigurationChange = { [weak self] in
+            self?.handleNotificationAudioReset()
+        }
+        setupNotificationObservers()
     }
 
     deinit {
+        removeNotificationObservers()
         stop()
     }
 
@@ -215,6 +231,101 @@ public final class MetronomeEngine: @unchecked Sendable {
 
         state = .stopped
         onPlaybackStateChanged?(.stopped)
+    }
+
+    // MARK: - Audio Reset & Hardware Recovery
+
+    /// Sets up notification observers for audio configuration changes and system sleep/wake.
+    private func setupNotificationObservers() {
+        removeNotificationObservers()
+
+        // 1. Observe AVAudioEngineConfigurationChangeNotification
+        let engineObserver = NotificationCenter.default.addObserver(
+            forName: .AVAudioEngineConfigurationChange,
+            object: audioEngine.engine,
+            queue: nil
+        ) { [weak self] _ in
+            self?.handleNotificationAudioReset()
+        }
+        notificationObservers.append(engineObserver)
+
+        #if os(macOS)
+        // 2. Observe NSWorkspace.didWakeNotification on macOS
+        let wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            self?.handleNotificationAudioReset()
+        }
+        notificationObservers.append(wakeObserver)
+
+        let defaultWakeObserver = NotificationCenter.default.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            self?.handleNotificationAudioReset()
+        }
+        notificationObservers.append(defaultWakeObserver)
+        #endif
+    }
+
+    /// Removes all active notification observers.
+    private func removeNotificationObservers() {
+        for observer in notificationObservers {
+            NotificationCenter.default.removeObserver(observer)
+            #if os(macOS)
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+            #endif
+        }
+        notificationObservers.removeAll()
+    }
+
+    /// Dispatches audio reset asynchronously to avoid deadlocks on notification threads.
+    private func handleNotificationAudioReset() {
+        audioResetQueue.async { [weak self] in
+            self?.handleAudioReset()
+        }
+    }
+
+    /// Handles audio hardware configuration resets and sleep/wake events:
+    /// Safely stops, tears down, reconnects nodes, rebuilds cached buffers,
+    /// restarts AVAudioEngine graph, and resumes playback if active.
+    public func handleAudioReset(force: Bool = false) {
+        lock.lock()
+        defer { lock.unlock() }
+
+        let now = ProcessInfo.processInfo.systemUptime
+        // Debounce rapid duplicate notifications within 250ms (unless forced)
+        if !force && (now - lastResetUptime < 0.25) {
+            return
+        }
+        guard !isRebuildingGraph else { return }
+
+        isRebuildingGraph = true
+        defer { isRebuildingGraph = false }
+        lastResetUptime = now
+
+        let wasPlaying = (state == .playing)
+
+        // 1. Safely stop audio engine nodes
+        audioEngine.stop()
+
+        // 2. Tear down, reconnect nodes, query hardware format, prepare graph
+        audioEngine.reconstructGraph()
+
+        // 3. Rebuild cached buffers with new format
+        self.cachedBuffers = audioEngine.createCachedBuffers(timbre: timbre)
+
+        // 4. Restart AVAudioEngine graph and resume playback if active
+        if wasPlaying {
+            do {
+                try audioEngine.start()
+            } catch {
+                // If restart fails, graph is prepared for next play attempt
+            }
+        }
     }
 
     // MARK: - Tap Tempo

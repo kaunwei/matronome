@@ -1,5 +1,8 @@
 import Testing
 import Foundation
+#if os(macOS)
+import AppKit
+#endif
 @testable import MetronomeCore
 
 final class TestBox<T: Sendable>: @unchecked Sendable {
@@ -193,19 +196,40 @@ struct EngineTests {
     }
 
     @Test func testPracticeTargetTimerIntegration() {
-        let pattern = MeasurePattern(timeSignature: TimeSignature(beatsPerMeasure: 2, beatValue: 4), subdivision: .quarter)
-        let engine = MetronomeEngine(tempo: Tempo(bpm: 120), pattern: pattern)
-        // Set target timer to 1.0s (= 2 quarter note beats at 120 BPM)
-        engine.practiceTargetTimer.setTargetDuration(1.0)
+        // Verify countdown is decoupled from audio subdivision steps:
+        // Calling processTick() does NOT double-decrement or advance the target timer.
+        let pattern = MeasurePattern(timeSignature: TimeSignature(beatsPerMeasure: 4, beatValue: 4), subdivision: .sixteenth)
+        let engine = MetronomeEngine(tempo: Tempo(bpm: 240), pattern: pattern)
+        engine.practiceTargetTimer.setTargetDuration(5.0)
         engine.practiceTargetTimer.start()
 
-        // 1st beat at 120 BPM = 0.5s advanced
-        engine.processTick()
-        #expect(abs(engine.practiceTargetTimer.remainingTime - 0.5) < 0.01)
+        let initialRemaining = engine.practiceTargetTimer.remainingTime
+        // Execute 16 sixteenth-note ticks (1 full measure at 240 BPM)
+        for _ in 0..<16 {
+            engine.processTick()
+        }
+        // Subdivisions must NOT decrement the timer by stepInterval
+        #expect(abs(engine.practiceTargetTimer.remainingTime - initialRemaining) < 0.1)
+    }
 
-        // 2nd beat at 120 BPM = 0.5s advanced, reaches 1.0s target -> triggers stop
-        engine.processTick()
+    @Test func testMetronomeStopsWhenPracticeTargetTimerReachesZero() async throws {
+        let pattern = MeasurePattern(timeSignature: TimeSignature(beatsPerMeasure: 4, beatValue: 4), subdivision: .quarter)
+        let engine = MetronomeEngine(tempo: Tempo(bpm: 240), pattern: pattern)
+
+        // Set a short target duration of 0.1s
+        engine.practiceTargetTimer.setTargetDuration(0.1)
+        try engine.start()
+        #expect(engine.state == .playing)
+
+        // Wait up to 1.0s for the target timer to reach 0 and stop the engine
+        let startWait = ProcessInfo.processInfo.systemUptime
+        while engine.state == .playing && (ProcessInfo.processInfo.systemUptime - startWait) < 1.0 {
+            try await Task.sleep(nanoseconds: 20_000_000)
+        }
+
+        #expect(engine.state == .stopped)
         #expect(engine.practiceTargetTimer.remainingTime == 0.0)
+        #expect(engine.practiceTargetTimer.isFinished)
     }
 
     @Test func testPracticeTrackerRecording() {
@@ -217,5 +241,64 @@ struct EngineTests {
 
         engine.stop()
         #expect(tracker.isRunning == false)
+    }
+
+    @Test func testMetronomeEngineAudioResetWhileStopped() {
+        let engine = MetronomeEngine(tempo: Tempo(bpm: 120))
+        #expect(engine.state == .stopped)
+
+        // Reset audio while stopped
+        engine.handleAudioReset(force: true)
+        #expect(engine.state == .stopped)
+        #expect(engine.audioEngine.isRunning == false)
+    }
+
+    @Test func testMetronomeEngineAudioResetWhilePlayingResumesPlayback() throws {
+        let engine = MetronomeEngine(tempo: Tempo(bpm: 120))
+        try engine.start()
+        #expect(engine.state == .playing)
+        #expect(engine.audioEngine.isRunning == true)
+
+        // Simulate wake or audio device switch reset
+        engine.handleAudioReset(force: true)
+
+        // Engine must remain playing and audio graph restarted
+        #expect(engine.state == .playing)
+        #expect(engine.audioEngine.isRunning == true)
+
+        // Ticks must process cleanly without throwing or crashing
+        engine.processTick()
+
+        engine.stop()
+        #expect(engine.state == .stopped)
+    }
+
+    @Test func testMetronomeEngineSleepWakeAndAudioConfigNotifications() async throws {
+        let engine = MetronomeEngine(tempo: Tempo(bpm: 120))
+        try engine.start()
+        #expect(engine.state == .playing)
+
+        // Post AVAudioEngineConfigurationChange notification
+        NotificationCenter.default.post(
+            name: .AVAudioEngineConfigurationChange,
+            object: engine.audioEngine.engine
+        )
+
+        #if os(macOS)
+        // Post NSWorkspace.didWakeNotification
+        NotificationCenter.default.post(
+            name: NSWorkspace.didWakeNotification,
+            object: nil
+        )
+        #endif
+
+        // Wait briefly for asynchronous audio reset queue to execute without deadlock
+        try await Task.sleep(nanoseconds: 100_000_000) // 100ms
+
+        #expect(engine.state == .playing)
+        engine.processTick()
+
+        engine.stop()
+        #expect(engine.state == .stopped)
     }
 }
