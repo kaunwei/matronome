@@ -42,8 +42,8 @@ Worker tasks are not limited to coding. The worker autonomously adapts its execu
 2. **Tabulation**: Aggregate results into clean markdown/CSV tables with summary metrics.
 
 ### Archetype D: Diagnostic & Bug Isolation (`[DIAGNOSTIC]`)
-1. **Reproduction**: Create minimal failing test cases or reproduce error traces.
-2. **Root Cause Analysis**: Isolate the exact failing branch with evidence.
+1. **Reproduction Proof Gate**: Create minimal failing test cases or capture exact error reproduction traces. Pure textual explanations without a verifiable command output or stack pointer are strictly rejected.
+2. **Root Cause Analysis**: Isolate the exact failing branch with evidence. If the root cause is obscure or cannot be verified after 2 attempts, Worker MUST NOT invent explanations; emit `[NEED_GUIDANCE]` or report verified facts vs unknown gaps honestly.
 
 ---
 
@@ -51,13 +51,14 @@ Worker tasks are not limited to coding. The worker autonomously adapts its execu
 
 Across all task archetypes (Code, Research, Benchmarking, Diagnostics), Worker MUST strictly observe:
 
-1. **Anti-Hallucination / Zero Speculation (看不懂絕不硬猜)**:
+1. **Anti-Hallucination / Zero Speculation (看不懂絕不硬猜、嚴禁胡亂寫報告)**:
    - If legacy code, obscure macros, complex math, or undocumented behaviors are ambiguous, Worker **MUST NOT guess or invent intent**.
    - State strictly: *Observed behavior*, *Verified code paths*, and *Uncertain/Ambiguous areas*.
+   - Never claim a bug is "diagnosed" or "fixed" without reproducible test evidence.
 2. **Fact vs Hypothesis Separation (事實與假設嚴格分離)**:
    - In research, benchmarks, and diagnostic logs, raw output is recorded as **Facts**.
    - Any interpretation is explicitly labeled as **Hypothesis** with verification suggestions.
-3. **Transparent Evidence**:
+3. **Transparent Evidence Gate**:
    - Every completed task must provide reproducible proof (test command pass, benchmark output summary, or linked file locations).
 
 ---
@@ -106,11 +107,19 @@ For minor ambiguities that do not threaten core integrity:
    - Planner retains the sovereign right to inspect underlying source files, run targeted commands, or check git stats whenever summary information is deemed insufficient.
 
 Upon 100% verification success:
-1. **Auto Git Commit**:
+1. **Auto Git Commit (Unified Conventional Commits Standard)**:
+   Stage the modified target files and commit using standard Conventional Commit format (concise title <= 70 chars, plus structured acceptance body):
    ```bash
-   git add <modified-target-files>
-   git commit -m "feat/fix: <task title> [TASK-ID]"
+   git commit -m "<type>(<scope>): <concise action description in English <= 60 chars> (<task_id>)" -m "<1-3 summary bullet points of changes>
+
+Task: <task_id> (<granularity_level>)
+Scope: <target_files>
+Verification: <test command> (<measurable result, e.g. 6/6 passed, 100% OK>)
+Attempts: <attempts_count> | Confidence: <confidence_score>"
    ```
+   - **Allowed types**: `feat`, `fix`, `refactor`, `test`, `perf`, `docs`.
+   - **Scope**: Target module or subsystem name (e.g. `calc`, `auth`, `api`, `ui`).
+   - **Strict Rule**: NEVER dump raw task schema strings (`| LEVEL: ... | TARGET: ...`) into the commit title line. The title line must remain clean and readable for `git log --oneline`.
 2. **Prepend Structured Summary & Attempt Trace to `progress.log` (Strictly <= 15 lines)**:
 ```text
 ================================================================================
@@ -125,3 +134,19 @@ Attempt Trace:
 Granularity Feedback: <Worker observation on module granularity>
 ================================================================================
 ```
+
+---
+
+## 7. Dual-Worktree Isolation & Preview Drop-Box Support
+
+The background worker supports workspace isolation modes via `WORKER_ISOLATION` in `.worker.env`:
+- **Dual-Worktree Isolation (`WORKER_ISOLATION=1`, Default)**:
+  - Worker operates exclusively in `.worker-tree` on branch `feature/worker-frontier`.
+  - Commits land cleanly on `feature/worker-frontier`.
+  - Upon task verification success, `worker.sh` publishes an immutable snapshot to `.preview/` with `version.json`.
+  - Human and Planner can preview verified builds at any time without colliding with worker compilation, tests, or mid-edit files.
+- **Single-Tree In-Place Mode (`WORKER_ISOLATION=0`)**:
+  - Worker operates directly in the project root.
+  - Commits land directly on the active branch (e.g., `main`).
+  - Recommended for hardware-locked environments or fixed ports (e.g. port 22).
+

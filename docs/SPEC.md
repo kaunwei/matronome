@@ -1,94 +1,178 @@
-# Metronome Product Specification & Technical Reference
+# Engineering Specification: 24h Unattended Dual-Terminal Framework
 
-This document provides the complete, authoritative specification for the macOS native Metronome application built with Swift and SwiftUI.
-
----
-
-## 1. Executive Overview
-
-Metronome is a high-precision, low-latency, modular metronome and rhythm training suite tailored for musicians, educators, and audio professionals on macOS. It combines an ultra-stable CoreAudio/AVAudioEngine audio pipeline with rich visualization, advanced time signatures, polyrhythmic subdivisions, and comprehensive practice telemetry.
+This document specifies the technical architecture, protocols, data schemas, and lifecycle guarantees of the 24-Hour Unattended Dual-Terminal AI Development Framework.
 
 ---
 
-## 2. Core Audio Architecture & Sound Synthesis
+## 0. Role Definition & Duty Boundary Firewall
 
-### 2.1 Low-Latency Audio Engine
-- **Engine**: Built upon `AVAudioEngine` and custom PCM buffer synthesis for zero-drift timekeeping.
-- **Sample Rate & Precision**: 44.1 kHz / 48 kHz floating-point PCM buffers.
-- **Audio Output Routing**: Dynamic device routing and hot-plug support via CoreAudio listeners.
-
-### 2.2 Dynamic PCM Sound Synthesis & Sound Profiles
-- **Sound Packs**:
-  - `digital`: Crisp synthesized sine/square burst with short decay.
-  - `wood`: Resonant woodblock transient synthesis with organic dampening.
-  - `mechanical`: Classic mechanical metronome escapement impulse.
-  - `beep`: Clean modern tone pip.
-  - `cowbell`: Iconic percussion impulse with metallic undertones.
-- **Downbeat Pitch Tuning**:
-  - Independent frequency/pitch shaping for downbeat accents (Beat 1) vs. regular beats vs. subdivisions.
-  - Configurable accent pitch boost (+2 to +12 semitones or custom frequencies) ensuring absolute metric clarity.
+The framework enforces a strict division of responsibilities:
+- **Terminal A (Interactive Planner / Architect)**:
+  - Default Reflex: Grooms requirements, models domain, decomposes into atomic contracts in `tasks.txt` (`[CODE]`, `[DIAGNOSTIC]`, `[RESEARCH]`), and yields control. NEVER modifies application code directly for routine tasks (`Sources/`, `src/`, `app/`, `lib/`, `tests/`) and avoids unbounded in-session debugging loops.
+  - Sovereign Exceptions:
+    1. *Anti-Rubber-Stamp Audit*: Mandated deep inspections on `Attempts > 1`, `Confidence < 1.0`, or critical architectural seams.
+    2. *Level 3 Implementation Escalation*: Intervenes when a coding task was **already at Level 3 (Micro)** and Worker failed 3 retries, followed by a mandatory post-mortem allocation retro in `granularity-profile.json` and `.worker.notes.md`.
+    3. *Diagnostic Evasion & Bogus Report Intervention*: Intervenes when Worker repeatedly produces vague/hallucinated reports or fails to isolate the issue after 2-3 retries without verifiable evidence. Planner directly isolates the root cause and logs quirks in `.worker.notes.md`.
+    4. *Explicit User Mandate*: User explicitly asks Planner to modify code directly.
+  - Active Skills: `/domain-modeling`, `/to-tickets`, `/calibrate-task-granularity`, `/watch-worker-queue`, `/code-review`.
+- **Terminal B (Background Worker Daemon)**:
+  - Headless execution engine. Reads `tasks.txt`, executes in `.worker-tree` (or root in Mode 2), runs build/tests, auto-commits with Conventional Commits, and stages `.preview/` snapshots.
 
 ---
 
-## 3. Rhythm Engine & Meter Capabilities
+## 1. System Topology & Dual-Terminal Architecture
 
-### 3.1 Custom Time Signatures & Non-Standard Meters
-- Full support for arbitrary rational meters ($N / D$):
-  - Standard: `4/4`, `3/4`, `2/4`, `6/8`, `12/8`, etc.
-  - Odd & Complex: `5/4`, `7/8`, `9/8`, `11/16`.
-  - Non-standard & Irregular denominators: e.g., `3/3` (triplet base measure), `5/6`, etc.
-- **Dynamic Beat Slots**:
-  - Dynamic slot visualization matching the exact numerator count.
-  - Per-beat toggle for accent, normal, ghost, or mute states.
+The framework physically separates interactive architectural reasoning from unattended headless execution:
 
-### 3.2 Advanced Subdivisions & Shuffle / Swing
-- **Subdivision Modes**:
-  - Quarter notes (1:1)
-  - Eighth notes (1:2)
-  - Triplets (1:3)
-  - Sixteenth notes (1:4)
-  - Quintuplets (1:5)
-  - Sextuplets / 6-tuplets (1:6)
-  - Septuplets (1:7) & 32nd notes (1:8)
-- **Shuffle & Swing Engine**:
-  - Continuously adjustable swing ratio (50% straight to 75% hard swing).
-  - Micro-timing offset preservation across high BPM ranges (20 to 400 BPM).
-
----
-
-## 4. Practice Suite & Training Modules
-
-### 4.1 Speed Trainer (Tempo Automator)
-- **Incremental Mode**: Automatically accelerates or decelerates BPM by $\Delta B$ every $N$ bars or seconds.
-- **Target Boundaries**: Configurable start tempo, target tempo, step size, and loop/stop triggers.
-- **Warm-up / Cooldown**: Optional laddering curves for structured technical routines.
-
-### 4.2 Gap Trainer (Internal Clock Developer)
-- **Mute Patterns**: Plays $M$ bars audible followed by $K$ bars silent.
-- **Randomized Gap Mode**: Randomly drops bars or beats to stress-test internal rhythm stability.
-- **Visual-Only Mode**: Retains visual pulse during audio dropouts or tests pure sensory independence.
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│               Terminal A: Interactive Architect (In-Session)           │
+│  • Discuss architecture & requirements with user in Chinese/English.   │
+│  • Offload 1: Delegate heavy exploration to In-Session Subagents.      │
+│  • Decompose goals into single-line atomic English contracts.          │
+│  • Writes tasks to tasks.txt and yields control immediately.           │
+│  • Guides user with project-native preview commands for .preview/.     │
+│  • Automatically merges feature/worker-frontier upon batch completion. │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ (FIFO tasks.txt with atomic lock)
+┌───────────────────────────────────▼────────────────────────────────────┐
+│          Terminal B: Background Worker Daemon (worker.sh)              │
+│  • Zero-argument background daemon (sources .worker.env).              │
+│  • Evaluates WORKER_ISOLATION toggle (Mode 1: Worktree / Mode 2: Root) │
+│  • Headless stateless CLI per task (agy --mode accept-edits).          │
+│  • Enforces universal-build-verify.md (100% test pass).                │
+│  • Max 3 automated repair attempts -> clean rollback on block.         │
+│  • Unified Conventional Commit & prepends <=15 lines to progress.log.  │
+│  • Stages verified snapshot to .preview/ drop-box on task PASS.        │
+└────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## 5. Telemetry, Practice Tracking & Analytics
+## 2. Workspace Isolation & Execution Modes
 
-### 5.1 Practice Time Header & Session Management
-- **Uncluttered Top Bar**: Clean visual aesthetic displaying session, weekly, and total practice statistics.
-- **Current Session Timer**: Live-tracking active playing duration (pauses automatically when stopped).
-- **Target Practice Timer**: Configurable countdown (e.g. 5m, 15m, 30m, 60m) with audible/visual target celebration.
+Configured via `WORKER_ISOLATION` in `.worker.env`:
 
-### 5.2 Weekly Reset & 14-Day Practice Trends
-- **Weekly Reset**: Manual or automated ISO-week boundary roll-over for weekly practice quotas.
-- **14-Day Practice History**:
-  - Daily aggregated training duration stored locally in persistent storage.
-  - Visual trend breakdown illustrating daily consistency and volume over a rolling 14-day window.
+### 2.1 Mode 1: Dual-Worktree Persistent Isolation (`WORKER_ISOLATION=1`, Default)
+- **Topological Invariant**: Exactly **TWO** worktrees exist at any time:
+  1. `Main Workspace` (`main` or active user branch): Human terminal, IDE, and test bench.
+  2. `Worker Workspace` (`.worker-tree` on branch `feature/worker-frontier`): Daemon sandbox.
+- **Persistence Guarantee**: `.worker-tree` is **never destroyed** between tasks. It remains warm across the entire 24h cycle to preserve build and compiler caches.
+- **Untracked Config Mirroring**: `.worker-tree` automatically mirrors `.env` and `.worker.env` from the project root upon initialization.
+- **Cache Symlinking**: Heavy dependency directories (`node_modules`, `.venv`) are symlinked from the main workspace to eliminate disk bloat and cold compile starts.
+- **Conflict Prevention**:
+  - Worker subshell runs with port offset (`PORT=3001`, `TEST_PORT=3001`).
+  - Worker runs with isolated database paths (`DATABASE_URL=sqlite:///.worker-tree/test.db`).
+
+### 2.2 Mode 2: Single-Tree In-Place Execution (`WORKER_ISOLATION=0`)
+- **Use Case**: Hardware-locked repositories, fixed serial/COM devices, or environments restricted to a singleton port (e.g., port 22).
+- **Behavior**: Worker operates directly in the project root on the active branch without creating `.worker-tree`.
 
 ---
 
-## 6. User Interface & macOS Desktop Experience
+## 3. Immutable Preview Drop-box Protocol (`.preview/`)
 
-### 6.1 Layout & Visual Feedback
-- **Pendulum & Circular Beat Ring**: Smooth 60/120fps interpolated visualizers reflecting exact phase position.
-- **Tactile Tempo Controls**: Stepper buttons (±1, ±5), direct BPM text entry, and Tap Tempo detection algorithm.
-- **Dark/Light Mode**: Full native macOS vibrancy and theme adaptation.
-- **Global Hotkeys & Spacebar Trigger**: Instant play/pause, tap tempo, and preset switching.
+To enable painless early access without race conditions, compiler file locks (`ETXTBSY`), or mid-task syntax breaks:
+
+1. **Trigger Condition**: Strictly upon **100% verification test pass** for an individual task.
+2. **Atomic Publication**:
+   - For script projects: `git archive feature/worker-frontier | tar -x -C .preview/`.
+   - For compiled projects: Outputs in `build/bin`, `target/debug`, or `dist` are atomically staged into `.preview/`.
+3. **Metadata Contract (`.preview/version.json`)**:
+   ```json
+   {
+     "task_id": "TASK-005",
+     "commit": "54cf031",
+     "summary": "Add square_root method and unit tests",
+     "updated_at": "2026-10-19T05:30:03Z"
+   }
+   ```
+4. **Zero-Script Human Preview**:
+   - Planner (Terminal A) inspects `.preview/version.json` and prompts the user with the exact native command:
+     - Compiled: `./.preview/<binary>`
+     - Interpreted: `python3 .preview/src/<entrypoint>.py`
+   - Zero compilation required; zero git merge required.
+
+---
+
+## 4. Zero-Intervention Auto-Merge Protocol
+
+When all tasks in `tasks.txt` are completed:
+1. Sentinel Subagent detects zero remaining tasks and worker `IDLE` / `STOPPED` state via `scripts/watch_worker.sh`.
+2. Sentinel triggers a proactive wakeup event in Terminal A.
+3. Planner reads `head -n 15 progress.log` and verifies that all tasks passed.
+4. If in Mode 1 (`WORKER_ISOLATION=1`):
+   - Planner executes:
+     ```bash
+     git merge --ff-only feature/worker-frontier
+     ```
+   - Main workspace is cleanly updated to the latest verified frontier without manual human git commands.
+
+---
+
+## 5. Task Schema & Dynamic Granularity Ladder
+
+### 5.1 Single-Line Tracer-Bullet Contract
+```text
+TASK-XXX | LEVEL: 1 | AFTER: <task_id> | TARGET: <file_paths> | ACTION: <concrete logic> | VERIFY: <test command> | CONSTRAINTS: <bounds>
+```
+
+### 5.2 Dynamic Granularity Levels
+- **Level 1 (Coarse / Feature Seam)**: Defines public interface, verification test, and constraints. Worker has full autonomy on internal data structures and helpers.
+- **Level 2 (Medium / Component Slice)**: Decomposes into distinct modules (e.g. data schema vs engine).
+- **Level 3 (Micro / Step)**: Precise function-level instructions used when worker requested guidance or previous attempts struggled.
+
+### 5.3 Granularity Escalation Ladder & Level 3 Sovereign Intervention
+1. **Escalation on Failure**: When a task blocks (`[BLOCKED]`):
+   - Level 1 Blocked ➔ Demote to Level 2 (split into component slices).
+   - Level 2 Blocked ➔ Demote to Level 3 (micro function-level instructions & exact tests).
+2. **Level 3 Failure Threshold (Planner Sovereign Intervention)**:
+   - When a task is **ALREADY at Level 3 (Micro)** and Worker still blocks/fails after 3 retries, this indicates deep architectural contradictions, environment quirks, or subtle bugs beyond the smaller model's scope.
+   - **Planner Steps In**: Planner reads `.worker.log`, inspects target code directly, applies the surgical fix, runs verification tests, and commits.
+3. **Post-Mortem Allocation Retro**:
+   - Planner **MUST record why the allocation failed** in:
+     - `docs/agents/granularity-profile.json` (subsystem score & notes)
+     - `.worker.notes.md` (compiler traps / repo quirks discovered)
+   - Permanently enhances future task allocation efficiency.
+
+---
+
+## 6. Unified Conventional Commit Standard
+
+Both Planner and Worker strictly format git commits as follows:
+
+```bash
+git commit -m "<type>(<scope>): <concise action description in English <= 60 chars> (<task_id>)" -m "<1-3 summary bullet points of changes>
+
+Task: <task_id> (<granularity_level>)
+Scope: <target_files>
+Verification: <test command> (<measurable result, e.g. 8/8 passed, 100% OK>)
+Attempts: <attempts_count> | Confidence: <confidence_score>"
+```
+
+- **Allowed types**: `feat`, `fix`, `refactor`, `test`, `perf`, `docs`.
+- **Title Line Guardrail**: Raw task strings (`| LEVEL: ... | TARGET: ...`) are **strictly prohibited** in the commit title line.
+
+---
+
+## 7. Dynamic Queue Rescheduling & Hot Preemption
+
+1. **Atomic File Locking**:
+   - `worker.sh` and `scripts/reorder_queue.sh` use POSIX directory locking (`mkdir tasks.txt.lock`) with automated retry backoff to ensure collision-free queue pops and insertions.
+2. **Live Feedback Hotfix**:
+   - If human spots an issue during early preview in `.preview/`, Planner inspects remaining tasks in `tasks.txt`, deduplicates redundant tasks, and injects `[HOTFIX]` tasks at line 1.
+   - Worker picks up the hotfix immediately after finishing its current turn.
+
+---
+
+## 8. Two-Tier Anti-Rubber-Stamping Audit Protocol
+
+To ensure acceptance integrity without token bloat:
+1. **Tier 1 (Fast Screening)**: Read `head -n 15 progress.log` and `git log -n 1 --stat`. Low-token acceptance for routine tasks with 1 attempt and 1.0 confidence.
+2. **Tier 2 (Mandatory Deep Audit)**:
+   - Triggered whenever:
+     - The task touches a critical architectural seam.
+     - Worker reports `Attempts > 1`.
+     - Worker reports `Confidence < 1.0`.
+   - Action: Planner directly inspects git diffs, views modified line slices, or re-runs test suites locally to prevent simulated or hallucinated test passes.
+

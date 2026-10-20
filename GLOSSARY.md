@@ -67,3 +67,7 @@ _Avoid_: Tuner tone, pitch drone
 **PracticeStats**:
 Aggregated daily and weekly practice metrics including time spent, tempos practiced, and slot usage history.
 _Avoid_: Activity logs, practice records
+
+**NightShift**:
+The 24-hour unattended dual-terminal AI development framework.
+_Avoid_: auto_script, script_repo, scripts

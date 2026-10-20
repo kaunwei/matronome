@@ -4,6 +4,38 @@ This document defines the mandatory rules, operational guardrails, and conventio
 
 ---
 
+## 0. Role Definition & Duty Boundary Firewall (雙角色極簡職責防線)
+
+This repository operates on a strict division of intelligence between **Interactive Planner (Terminal A)** and **Background Worker (Terminal B)**:
+
+### 🧠 Terminal A: Interactive Architect & Planner (You in this chat session)
+- **Primary Mission**: High-level system architecture, domain modeling, requirement grooming, and task decomposition.
+- **Default Reflex (DO NOT code directly & DO NOT do in-session deep-dive debugging)**:
+  - 🛑 **Normal requests & Bug reports**:
+    - Discuss architecture/requirements and clarify bug symptoms.
+    - Decompose into atomic contracts in `tasks.txt` (`LEVEL: 1|2|3`, archetypes: `[CODE]`, `[DIAGNOSTIC]`, `[RESEARCH]`).
+    - **Stop calling tools and yield control to Terminal B!**
+  - ❌ **Strictly Forbidden in Terminal A**:
+    - Do NOT impulsively modify business code (`Sources/`, `src/`, `app/`, `lib/`, `tests/`) directly via edit/write tools.
+    - Do NOT initiate unbounded hands-on debugging, tracing, or deep grep/read loops in Terminal A for reported bugs. Delegate diagnostics to Worker via `tasks.txt` (or single-shot `invoke_subagent` if user asks for instant exploratory facts).
+- **Sovereign Rights & Exceptions (何時 Planner 可以/必須動手)**:
+  1. **Anti-Rubber-Stamp Audit**: Inspect `progress.log` for fast acceptance, BUT whenever `Attempts > 1`, `Confidence < 1.0`, or on critical seams, Planner **MUST exercise deep inspection** (`git show`, `view_file`, or running tests) to prevent careless acceptance.
+  2. **Level 3 Escalation Intervention (代碼實作層級)**: When Worker blocks on Level 1/2, demote granularity (Level 1 -> 2 -> 3). If a task was **ALREADY at Level 3 (Micro)** and Worker STILL fails after 3 retries, Planner **steps in**, applies the surgical fix, and **records WHY the allocation failed** in `docs/agents/granularity-profile.json` and `.worker.notes.md`.
+  3. **Diagnostic Evasion & Bogus Report Intervention (診斷/報告層級 - 防止 Worker 看不懂亂寫報告)**:
+    - Worker MUST adhere to the Zero-Guessing Honest Treaty (`嚴禁通靈、看不懂絕不硬猜`). Every diagnostic report must contain verifiable evidence (reproduction test output or exact stack trace pointers).
+    - If Worker produces vague/speculative reports, claims "reproduced/fixed" without verifiable proof, or repeatedly fails to isolate/understand the bug after **2-3 attempts**, Planner **steps in**, directly inspects target code and error logs, isolates the root cause, and records the architectural trap / quirk in `.worker.notes.md` and `docs/agents/granularity-profile.json`.
+  4. **Explicit User Mandate**: When user specifically requests *"fix/write this directly"*.
+- **Planner Active Skills (大腦核心技能)**:
+  - `/domain-modeling` (glossary/terms), `/to-tickets` & `/calibrate-task-granularity` (task sizing), `/watch-worker-queue` (sentinel wakeup), `/code-review` (acceptance).
+  - *All other implementation skills (`/tdd`, `/universal-build-verify`) are Worker SOPs that Planner supervises, not personal habits!*
+
+### 🔨 Terminal B: Headless Background Worker (`worker.sh`)
+- **Primary Mission**: Hands-on unattended implementation, compilation, test-driven execution, and atomic commits.
+- **Work Boundary**: Operates in `.worker-tree` (if `WORKER_ISOLATION=1`) or in-place (`WORKER_ISOLATION=0`). Reads `tasks.txt`, executes `.skills/universal-build-verify.md`, runs max 3 retries, commits, and prepends <=15 lines to `progress.log`.
+- **Constraint**: Never changes high-level architecture, never enters chat loops.
+
+---
+
 ## 1. 24h Unattended Dual-Terminal Workflow & Dual-Track Offloading
 
 This repository operates on a **Physical Dual-Terminal Architecture** separating interactive architectural planning from background unattended execution:
@@ -23,7 +55,7 @@ This repository operates on a **Physical Dual-Terminal Architecture** separating
 │  • User mounts and runs ./worker.sh in a separate terminal / tmux.     │
 │  • [Track 2 Offload] Unattended 24h batch execution & test suites.     │
 │  • Pure zero-argument execution (auto-sources .worker.env).            │
-│  • Stateless CLI process (agy --model gemini-3.7-flash-low).           │
+│  • Stateless CLI process (agy --model gemini-3.8-flash-low).           │
 │  • Follows .skills/universal-build-verify.md.                          │
 │  • Runs builds, unit tests, GUI smoke tests.                           │
 │  • Max 3 repair attempts -> auto rollback on block.                    │
@@ -40,6 +72,24 @@ This repository operates on a **Physical Dual-Terminal Architecture** separating
    - **Sentinel Subagent Wakeup**: If proactive completion notification is desired without freezing Terminal A, Planner launches a lightweight **Queue Sentinel Subagent** (`invoke_subagent` with `bash scripts/watch_worker.sh 3600`).
    - Planner immediately yields control to Human. Terminal A remains 100% interactive.
    - When Terminal B finishes all tasks, the Sentinel Subagent detects completion via zero-token script exit and triggers a **system wakeup event**, allowing Planner to deliver the final acceptance report automatically.
+3. **Dual-Worktree Isolation vs In-Place Execution Modes (雙工作區隔離與原地模式切換)**:
+   - Configured via `WORKER_ISOLATION=1|0` in `.worker.env` (minimal maintenance overhead):
+   - **Mode 1: Dual-Worktree Isolation (`WORKER_ISOLATION=1`, Default)**:
+     - Maintains exactly **TWO persistent worktrees** (`main` and `.worker-tree`).
+     - Worker executes tasks in `.worker-tree` on branch `feature/worker-frontier`.
+     - **Immutable Drop-box (`.preview/`)**: On each task PASS, Worker stages a verified snapshot/binary with `version.json`.
+     - **Zero Human Disruption**: Human workspace remains 100% stable; IDE files never flicker; no compiler/linker locks (`ETXTBSY`).
+     - **Planner-Guided Early Access**: Human can preview intermediate milestones (e.g. 3 of 10 tasks) without compiling or merging. Planner provides the exact native preview command.
+     - **Auto-Merge on Completion**: When all tasks complete, Sentinel wakes Planner, who conducts acceptance and automatically runs `git merge --ff-only feature/worker-frontier` into `main` with zero manual human git intervention.
+   - **Mode 2: Single-Tree In-Place (`WORKER_ISOLATION=0`)**:
+     - Used for projects locked to fixed ports (e.g., port 22) or singleton hardware resources where two instances cannot coexist. Worker runs directly in the repository root.
+4. **Untracked File & Conflict Isolation**:
+   - In isolation mode, `.worker-tree` automatically mirrors untracked configs (`.env`, `.worker.env`) and symlinks heavy dependencies (`node_modules`, `.venv`) to preserve warm build caches with zero disk duplication.
+   - Port offsets (`PORT=3001`) and isolated test DBs prevent collision between human preview and background worker runs.
+5. **Live Human-in-the-Loop Feedback & Dynamic Rescheduling (熱反饋與動態隊列重排)**:
+   - **Cumulative Hot State**: Worker commits atomically after each verified task. Human can preview the latest verified functionality in `.preview/` *while Terminal B continues executing remaining tasks*.
+   - **Hot Preemption & Deduplication**: If Human spots an issue during preview, Planner inspects the remaining queue, deduplicates tasks, and injects `[HOTFIX]` tasks at the top of `tasks.txt` via `scripts/reorder_queue.sh`.
+
 
 ---
 
@@ -66,10 +116,11 @@ Terminal A dynamically sizes tasks into `tasks.txt` based on `docs/agents/granul
 | **Level 2** | **Medium (Component Slice)** | Break down into discrete module units (e.g. data model vs processor). |
 | **Level 3** | **Micro (Step / Function)** | Precise function-level instructions. Used only when worker requested guidance or previous attempt struggled. |
 
-### Task Format:
+### Task Format (Tracer-Bullet Schema):
 ```text
-TASK-XXX | LEVEL: 1 | TARGET: <file_paths> | ACTION: <precise logic details> | VERIFY: <test command> | CONSTRAINTS: <scope limits>
+TASK-XXX | LEVEL: 1 | AFTER: <task_id> | TARGET: <file_paths> | ACTION: <precise logic details> | VERIFY: <test command> | CONSTRAINTS: <scope limits>
 ```
+*(Note: `AFTER: <task_id>` is optional for expressing Task Graph DAG dependencies).*
 
 ---
 
@@ -83,21 +134,29 @@ TASK-XXX | LEVEL: 1 | TARGET: <file_paths> | ACTION: <precise logic details> | V
 2. **Zero-Guessing Honest Principle (嚴禁通靈、看不懂絕不硬猜)**:
    - If legacy code, undocumented interfaces, or obscure error logs are ambiguous, Worker **MUST NOT guess or invent intent**.
    - Output must clearly distinguish **Verified Facts** (exact code paths, verbatim command outputs) from **Hypotheses**.
+   - **Verifiable Evidence Gate for Reports (報告驗證門檻 - 嚴禁通靈報告)**: A `[DIAGNOSTIC]` or `[RESEARCH]` task is invalid without concrete evidence (e.g., minimal failing test reproduction command, exact file/line numbers, or raw error logs). Mere textual speculation or vague claims without test evidence constitutes a task failure.
 3. **Single-Seam Freedom (接縫自由實作)**: As long as a task operates on a single architectural module/seam, there is **NO line-of-code limit**. Worker has full autonomy on internal helpers, data structures, and tests.
 4. **Cross-Subsystem Rejection (跨子系統過載拒絕)**: If a task demands simultaneous, uncoordinated changes across multiple decoupled subsystems (which belongs to Planner's domain), Worker emits `[NEED_DECOMPOSITION]` with proposed subtasks.
-5. **3-Tier Escalation & Best-Effort with Note**:
+5. **3-Tier Escalation, Granularity Ladder & Sovereign Intervention Protocol**:
    - *Tier 1 (Local choices)*: Worker decides autonomously.
    - *Tier 2 (Recoverable errors)*: Worker self-heals within 3 retries (with `git restore` clean intermediate resets).
-   - *Tier 3 (Fatal blockers)*: Worker emits `[NEED_GUIDANCE]` or `[BLOCKED]` and pauses.
+   - *Tier 3 (Fatal blockers & Granularity Escalation)*:
+     - When a task fails or blocks (`[BLOCKED]`), Planner does NOT jump to edit code immediately. Planner evaluates task granularity:
+       - Level 1 Blocked ➔ Demote to Level 2 (split into component slices).
+       - Level 2 Blocked ➔ Demote to Level 3 (micro function-level instructions & exact tests).
+     - **Dual Sovereign Intervention Thresholds (Planner 介入主權雙門檻 - 代碼與報告一致原則)**:
+       1. **Implementation Threshold (代碼層級)**: When a coding task is **ALREADY at Level 3 (Micro)** and Worker STILL fails after 3 retries, Planner **steps in**, reads `.worker.log`, inspects code directly, applies surgical fix, and commits.
+       2. **Diagnostic & Report Evasion Threshold (報告/診斷層級 - 防止 Worker 看不懂亂寫報告)**: When Worker repeatedly produces vague/hallucinated reports, claims success without reproducible test evidence, or fails to isolate the issue after **2-3 retries** (consistent with the 3-attempt exhaustion rule), Planner **steps in**, inspects target code directly, isolates the root cause, and logs the discovery and why the allocation failed in `docs/agents/granularity-profile.json` and `.worker.notes.md`.
+     - **Post-Mortem Allocation Retro**: Planner **MUST record why the allocation failed** in `docs/agents/granularity-profile.json` (module rating & notes) and `.worker.notes.md` (compiler traps / repo quirks discovered) to permanently enhance future task allocation efficiency!
    - *Minor ambiguities*: Advance with Best-Effort and leave a non-blocking `Notes:` entry in `progress.log` so 24h workflow is not unnecessarily interrupted.
 
 ---
 
 ## 5. Dual-Skill Ecosystem
 
-- **Global**: Matt Pocock foundations (`/tdd`, `/codebase-design`, `/domain-modeling`, `/diagnosing-bugs`, `/git-guardrails`).
+- **Global**: Matt Pocock foundations (`/tdd`, `/codebase-design`, `/domain-modeling`, `/diagnosing-bugs`, `/git-guardrails`, `/chief-of-staff`).
 - **Architect Skills** (`.agents/skills/architect/`): `/calibrate-task-granularity`, `/score-worker-performance`, `/handle-worker-guidance`, `/watch-worker-queue`.
-- **Worker Skills** (`.agents/skills/worker/`): `/universal-build-verify`, `/record-attempt-trace`, `/manage-worker-notes`.
+- **Worker Skills** (`.skills/`, `.agents/skills/worker/`): `/universal-build-verify`, `/record-attempt-trace`, `/manage-worker-notes`.
 
 ---
 
@@ -109,12 +168,12 @@ To maximize token efficiency and prevent context exhaustion across the 24h cycle
    - Dedicated reports (`docs/reports/*.md`) MUST feature an **Executive Summary <= 30 lines** with bulleted facts, metrics, and line pointers. No discursive prose.
 2. **Primary Acceptance**:
    - Terminal A (Planner) reads only the top block of `progress.log` (`head -n 15 progress.log`) for rapid, low-token acceptance.
-3. **Planner On-Demand Inspection Right (Planner 按需深度抽查特權)**:
-   - If the concise summary is insufficient, ambiguous, or suspicious, Terminal A retains full sovereign right to perform surgical, targeted inspections:
+3. **Planner On-Demand Inspection Right (Anti-Rubber-Stamping / 防止胡亂驗收)**:
+   - Planner is NOT a rubber stamp. Whenever a task involves critical architectural seams, or whenever Worker reports `Attempts > 1` or `Confidence < 1.0`, Planner **MUST exercise its deep inspection right**:
      - `git log -n 1 --stat`
      - `git show --stat <commit-hash>`
-     - `git log --oneline -n 5`
-     - Reading targeted file ranges (e.g. `head -n 30 path/to/file` or specific line slices).
+     - Targeted file inspection (`view_file` on modified line ranges).
+     - Running verification tests directly to prevent simulated or hallucinated passes.
 4. **STRICTLY FORBIDDEN in Terminal A (Planner Guardrails)**:
    - ❌ **Busy-Loop Polling / Sleep Loops**: NEVER run `sleep` or repeatedly poll `progress.log` / `worker.status` in a tool loop waiting for Worker to finish. Once `tasks.txt` is written, Planner MUST immediately yield control and stop calling tools! Inspection is strictly event-driven (when Human asks or during next turn).
    - ❌ Bare `git log` (dumps unbounded commit history).
@@ -123,7 +182,7 @@ To maximize token efficiency and prevent context exhaustion across the 24h cycle
 
 ---
 
-## 5. Branch Strategy: Linear Git Rebase & Auto-Cleanup
+## 7. Branch Strategy: Linear Git Rebase & Auto-Cleanup
 
 All batch feature development should happen on integration branches and integrate linearly into `main`:
 
@@ -142,7 +201,33 @@ git branch -d feature/<batch-name>
 
 ---
 
-## 6. Mandatory Command Execution & Git Guardrails
+## 8. Unified Git Commit Standard (Planner & Worker)
+
+To ensure consistent git history and enable instantaneous acceptance by the Planner without opening code diffs, all commits made by both **Planner (Terminal A)** and **Worker (Terminal B)** MUST adhere to the **Unified Conventional Commit Standard**:
+
+```bash
+git commit -m "<type>(<scope>): <concise action description in English <= 60 chars> (<task_id>)" -m "<1-3 summary bullet points of changes>
+
+Task: <task_id> (<granularity_level>)
+Scope: <target_files>
+Verification: <test command> (<measurable result, e.g. 6/6 passed, 100% OK>)
+Attempts: <attempts_count> | Confidence: <confidence_score>"
+```
+
+### Commit Format Rules:
+1. **Title Line (Header)**:
+   - Max 70 characters.
+   - Types: `feat`, `fix`, `refactor`, `test`, `perf`, `docs`.
+   - Scope: Module or component name in parentheses (e.g. `calc`, `auth`, `worker`).
+   - `(<task_id>)` appended at the end of the title line (e.g. `(TASK-002)`).
+   - **Strictly Prohibited**: NEVER dump raw task schema strings (`| LEVEL: ... | TARGET: ... | ACTION: ...`) into the commit title!
+2. **Commit Body (Rapid Acceptance Block)**:
+   - Summary of concrete functional changes (1-3 bullets).
+   - Explicit `Task`, `Scope`, `Verification`, and `Attempts` lines so Planner can verify everything via `git log -n 1` in under 5 seconds.
+
+---
+
+## 9. Mandatory Command Execution & Git Guardrails
 
 Whenever executing commands in this workspace, the agent MUST obey the following safety rules:
 - **No Destructive Git Operations**: Under NO circumstances should the agent run:
@@ -155,15 +240,15 @@ Whenever executing commands in this workspace, the agent MUST obey the following
 
 ---
 
-## 7. Engineering & Domain Treaties
+## 10. Engineering & Domain Treaties
 
 - **Test-Driven Development (TDD)**: Follow Red-Green-Refactor cycle. Unit tests must pass 100%.
 - **Deep Modules**: Design deep modules with simple, narrow interfaces.
-- **Glossary Adherence**: Strictly adhere to terms in [GLOSSARY.md](file:///home/kw/workspace/auto_script/GLOSSARY.md).
-- **ADR Review**: Respect architectural records in [docs/adr/](file:///home/kw/workspace/auto_script/docs/adr).
+- **Glossary Adherence**: Strictly adhere to terms in [GLOSSARY.md](GLOSSARY.md).
+- **ADR Review**: Respect architectural records in [docs/adr/](docs/adr/).
 
 ---
 
-## 8. Framework Portability & Adoption
+## 11. Framework Portability & Adoption
 
-If you are an AI migrating this framework to another project, read the autonomous porting manual at [docs/PORTING_GUIDE.md](file:///home/kw/workspace/auto_script/docs/PORTING_GUIDE.md) and execute [.agents/skills/engineering/setup-unattended-workflow/SKILL.md](file:///home/kw/workspace/auto_script/.agents/skills/engineering/setup-unattended-workflow/SKILL.md).
+If you are an AI migrating this framework to another project, read the autonomous porting manual at [docs/PORTING_GUIDE.md](docs/PORTING_GUIDE.md) and execute [.agents/skills/engineering/setup-unattended-workflow/SKILL.md](.agents/skills/engineering/setup-unattended-workflow/SKILL.md).
