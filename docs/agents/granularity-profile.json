@@ -13,15 +13,15 @@
       "recommended_level": "Level 1 (Coarse)",
       "last_score": 5,
       "success_rate": "100%",
-      "total_tasks": 0,
-      "notes": "AVAudioEngine audio synthesizer, multi-timbre click generator, and reference pitch drone"
+      "total_tasks": 1,
+      "notes": "AVAudioEngine audio synthesizer, PCM clicks, reference drone, and robust macOS sleep/wake graph recovery"
     },
     "Sources/MetronomeCore/State": {
       "recommended_level": "Level 1 (Coarse)",
       "last_score": 5,
       "success_rate": "100%",
-      "total_tasks": 0,
-      "notes": "Practice time tracker, target timer, daily stats, and dynamic preset slots manager"
+      "total_tasks": 1,
+      "notes": "Practice time tracker, monotonic wall-clock target timer (decoupled from beat ticks), daily stats, and presets"
     },
     "Sources/MetronomeCore/Trainers": {
       "recommended_level": "Level 1 (Coarse)",
@@ -34,15 +34,15 @@
       "recommended_level": "Level 1 (Coarse)",
       "last_score": 5,
       "success_rate": "100%",
-      "total_tasks": 0,
-      "notes": "Unified orchestrator bridging audio, rhythm scheduler, trainers, and practice tracking"
+      "total_tasks": 2,
+      "notes": "Unified orchestrator bridging audio, rhythm scheduler, trainers, practice tracking, and system sleep/wake notifications"
     },
     "Sources/MetronomeApp": {
       "recommended_level": "Level 1 (Coarse)",
       "last_score": 5,
       "success_rate": "100%",
-      "total_tasks": 0,
-      "notes": "SwiftUI macOS Desktop UI with clean minimalist layout, pendulum, trainers drawer, and preset slots"
+      "total_tasks": 1,
+      "notes": "SwiftUI macOS Desktop UI with clean minimalist layout, target timer toggle/auto-shutoff dismiss, and pendulum"
     }
   }
 }

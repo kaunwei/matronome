@@ -1,3 +1,21 @@
+[2026-10-20 17:35:30] [TASK-022] [SUCCESS]
+- Target: Sources/MetronomeCore/Audio/MetronomeAudioEngine.swift, Sources/MetronomeCore/Engine/MetronomeEngine.swift, Tests/MetronomeCoreTests/
+- Scope: Resolved audio loss after macOS sleep/wake and audio device changes by subscribing to NSWorkspace.didWakeNotification and AVAudioEngineConfigurationChangeNotification. Implemented safe audio graph reconstruction (reconnect playerNode/droneNode to mainMixerNode, query hardware output format, pre-prepare engine), buffer cache rebuild, and zero-deadlock asynchronous recovery queue. Playback automatically resumes if active.
+- Verify: swift test && bash scripts/build_app.sh passed 100% (42/42 unit tests passed, release application bundle built and verified).
+- Confidence: 5/5 (Thread-safe audio graph reset, output-only graph preserved, sleep/wake and route change verified).
+
+[2026-10-20 17:28:30] [TASK-021] [SUCCESS]
+- Target: Sources/MetronomeCore/State/PracticeTargetTimer.swift, Sources/MetronomeCore/Engine/MetronomeEngine.swift, Sources/MetronomeApp/ViewModels/MetronomeViewModel.swift, Tests/MetronomeCoreTests/
+- Scope: Fixed double-decrement bug by removing musical beat tick advance(by: stepInterval) from MetronomeEngine.processTick. Decoupled PracticeTargetTimer from audio rate and driven purely by monotonic wall-clock time (ProcessInfo.processInfo.systemUptime). Synchronized remainingTime, progress, and isFinished calculation consistency. Added unit tests verifying exact 1s/s countdown decrement rate and playback stoppage upon reaching 0.
+- Verify: swift test && bash scripts/build_app.sh passed 100% (38/38 unit tests passed, release application bundle built and verified).
+- Confidence: 5/5 (Accurate monotonic wall-clock timing, zero double-decrement drift, full thread safety verified).
+
+[2026-10-20 17:21:00] [TASK-020] [SUCCESS]
+- Target: Sources/MetronomeApp/Views/Header/PracticeTimeHeader.swift, Sources/MetronomeApp/ViewModels/MetronomeViewModel.swift
+- Scope: Added .contentShape(Rectangle()) to goal timer toggle button and drawer close button to eliminate hit-test dead zones and ensure reliable drawer open/close. Updated toggleTargetTimerExpanded() in MetronomeViewModel to automatically invoke resetTargetTimer() when the panel collapses. Added an explicit close/dismiss button (xmark) to targetCountdownDrawer.
+- Verify: swift test && bash scripts/build_app.sh passed 100% (36/36 unit tests passed, macOS app bundle rebuilt and verified).
+- Confidence: 5/5 (Smooth SwiftUI toggle, dead-zone free hit target, auto shut-off cancel on collapse verified).
+
 [2026-10-14 23:13:30] [TASK-019] [SUCCESS]
 - Target: Sources/MetronomeCore/State/PracticeTracker.swift, Sources/MetronomeCore/Engine/MetronomeEngine.swift, Sources/MetronomeApp/ViewModels/MetronomeViewModel.swift, tests/MetronomeCoreTests/StateTests.swift
 - Scope: Updated PracticeTracker.pause() to commit elapsed session duration into persistedTotalPracticeTime and sessionHistory, and reset currentPracticeTime to 0. Updated MetronomeEngine.pause() to invoke committing pause(tempo: activeTempo.bpm). Updated MetronomeViewModel.pause() & stop() to immediately call updatePracticeStats(). Updated StateTests.swift to verify pause() resets currentPracticeTime to 0 while totalPracticeTime accumulates, and that resuming start() counts from 0 while total continues growing.
