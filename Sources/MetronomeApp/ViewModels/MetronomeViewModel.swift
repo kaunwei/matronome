@@ -549,6 +549,9 @@ public final class MetronomeViewModel: ObservableObject {
     
     public func toggleTargetTimerExpanded() {
         isTargetTimerExpanded.toggle()
+        if !isTargetTimerExpanded {
+            resetTargetTimer()
+        }
     }
     
     // MARK: - Speed & Gap Trainer Configuration Helpers

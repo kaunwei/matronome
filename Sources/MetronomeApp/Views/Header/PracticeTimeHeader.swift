@@ -85,6 +85,7 @@ public struct PracticeTimeHeader: View {
                         .padding(.horizontal, 9)
                         .padding(.vertical, 5)
                         .frame(height: 28)
+                        .contentShape(Rectangle())
                         .background(
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
                                 .fill(viewModel.isTargetTimerExpanded ? Color.accentColor.opacity(0.18) : Color.secondary.opacity(0.08))
@@ -95,6 +96,7 @@ public struct PracticeTimeHeader: View {
                         )
                     }
                     .buttonStyle(.plain)
+                    .contentShape(Rectangle())
                     .help("Toggle practice target countdown timer")
                 }
             }
@@ -217,6 +219,23 @@ public struct PracticeTimeHeader: View {
                         .buttonStyle(.plain)
                     }
                 }
+                
+                // Explicit Close / Dismiss Button
+                Button(action: {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                        viewModel.toggleTargetTimerExpanded()
+                    }
+                }) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(.secondary)
+                        .frame(width: 22, height: 22)
+                        .contentShape(Rectangle())
+                        .background(Circle().fill(Color.secondary.opacity(0.08)))
+                }
+                .buttonStyle(.plain)
+                .contentShape(Rectangle())
+                .help("Dismiss goal timer panel")
             }
             
             // Progress Bar
