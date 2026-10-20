@@ -185,6 +185,7 @@ public final class MetronomeViewModel: ObservableObject {
                 if state == .stopped {
                     self?.resetVisuals()
                 }
+                self?.updatePracticeStats()
             }
         }
         
@@ -480,18 +481,14 @@ public final class MetronomeViewModel: ObservableObject {
         totalPracticeTime = engine.practiceTracker.totalPracticeTimeWithCurrentSession
         weeklyPracticeTime = engine.practiceTracker.stats.weeklyPracticeTime() + (engine.practiceTracker.isRunning ? currentPracticeTime : 0)
         
-        if isTargetTimerRunning {
+        if engine.practiceTargetTimer.isRunning {
             engine.practiceTargetTimer.tick()
-            targetCountdownRemaining = engine.practiceTargetTimer.remainingTime
-            if engine.practiceTargetTimer.isFinished {
-                isTargetTimerRunning = false
-                isTargetTimerFinished = true
-            }
-        } else {
-            targetCountdownRemaining = engine.practiceTargetTimer.remainingTime
-            targetCountdownDuration = engine.practiceTargetTimer.targetDuration
-            isTargetTimerFinished = engine.practiceTargetTimer.isFinished
         }
+        
+        isTargetTimerRunning = engine.practiceTargetTimer.isRunning
+        targetCountdownRemaining = engine.practiceTargetTimer.remainingTime
+        targetCountdownDuration = engine.practiceTargetTimer.targetDuration
+        isTargetTimerFinished = engine.practiceTargetTimer.isFinished
     }
     
     public func resetCurrentPracticeSession() {

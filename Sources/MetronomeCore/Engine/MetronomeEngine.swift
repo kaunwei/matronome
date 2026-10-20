@@ -193,7 +193,7 @@ public final class MetronomeEngine: @unchecked Sendable {
 
         stopTimerLoop()
         practiceTracker.stop(tempo: activeTempo.bpm)
-        practiceTargetTimer.reset()
+        practiceTargetTimer.pause()
         audioEngine.stop()
 
         currentMeasureIndex = 0
@@ -427,9 +427,6 @@ public final class MetronomeEngine: @unchecked Sendable {
         let tickCallback = onTick
         lock.unlock()
 
-        // Advance practice target timer by step duration (which may call onTargetReached -> stop())
-        practiceTargetTimer.advance(by: stepInterval)
-
         // Invoke callbacks outside lock to prevent deadlocks
         if let t = tickToDispatch {
             tickCallback?(t)
@@ -445,6 +442,10 @@ public final class MetronomeEngine: @unchecked Sendable {
     }
 
     private func handleTimerTick() {
+        guard state == .playing else { return }
+
+        // Drive practice target timer by wall-clock monotonic time
+        practiceTargetTimer.tick()
         guard state == .playing else { return }
 
         processTick()
