@@ -14,17 +14,19 @@ This repository operates on a strict division of intelligence between **Interact
   - 🛑 **Normal requests & Bug reports**:
     - Discuss architecture/requirements and clarify bug symptoms.
     - Decompose into atomic contracts in `tasks.txt` (`LEVEL: 1|2|3`, archetypes: `[CODE]`, `[DIAGNOSTIC]`, `[RESEARCH]`).
+    - **Hot Preemption for Diagnostics (探勘任務高優先插隊)**: Diagnostic & research tasks have top scheduling priority! Inject them at the top of `tasks.txt` (via `scripts/reorder_queue.sh`) so Worker preempts other tasks to rapidly gather verified facts for Planner.
     - **Stop calling tools and yield control to Terminal B!**
-  - ❌ **Strictly Forbidden in Terminal A**:
-    - Do NOT impulsively modify business code (`Sources/`, `src/`, `app/`, `lib/`, `tests/`) directly via edit/write tools.
-    - Do NOT initiate unbounded hands-on debugging, tracing, or deep grep/read loops in Terminal A for reported bugs. Delegate diagnostics to Worker via `tasks.txt` (or single-shot `invoke_subagent` if user asks for instant exploratory facts).
-- **Sovereign Rights & Exceptions (何時 Planner 可以/必須動手)**:
+  - ❌ **Forbidden Reflex in Terminal A (初次回應之防線禁區)**:
+    - Do NOT impulsively modify business code (`Sources/`, `src/`, `app/`, `lib/`, `tests/`) directly via edit/write tools during routine requests.
+    - Do NOT default to unbounded hands-on debugging loops or subagent exploration in Terminal A before giving Worker a chance to diagnose via high-priority queue preemption.
+- **Sovereign Rights & Exceptions (何時 Planner 可以且必須親自動手看/改)**:
   1. **Anti-Rubber-Stamp Audit**: Inspect `progress.log` for fast acceptance, BUT whenever `Attempts > 1`, `Confidence < 1.0`, or on critical seams, Planner **MUST exercise deep inspection** (`git show`, `view_file`, or running tests) to prevent careless acceptance.
   2. **Level 3 Escalation Intervention (代碼實作層級)**: When Worker blocks on Level 1/2, demote granularity (Level 1 -> 2 -> 3). If a task was **ALREADY at Level 3 (Micro)** and Worker STILL fails after 3 retries, Planner **steps in**, applies the surgical fix, and **records WHY the allocation failed** in `docs/agents/granularity-profile.json` and `.worker.notes.md`.
-  3. **Diagnostic Evasion & Bogus Report Intervention (診斷/報告層級 - 防止 Worker 看不懂亂寫報告)**:
+  3. **Diagnostic Threshold & Bogus Report Intervention (診斷臨界介入 - 防止 Worker 看不懂亂寫報告)**:
+    - Worker is the first line of diagnosis via high-priority queue preemption.
     - Worker MUST adhere to the Zero-Guessing Honest Treaty (`嚴禁通靈、看不懂絕不硬猜`). Every diagnostic report must contain verifiable evidence (reproduction test output or exact stack trace pointers).
-    - If Worker produces vague/speculative reports, claims "reproduced/fixed" without verifiable proof, or repeatedly fails to isolate/understand the bug after **2-3 attempts**, Planner **steps in**, directly inspects target code and error logs, isolates the root cause, and records the architectural trap / quirk in `.worker.notes.md` and `docs/agents/granularity-profile.json`.
-  4. **Explicit User Mandate**: When user specifically requests *"fix/write this directly"*.
+    - **Critical Threshold Trigger (到達臨界 Planner 親自介入看)**: If Worker produces vague/speculative reports, claims "reproduced/fixed" without verifiable proof, or repeatedly fails to isolate/understand the bug after **2-3 attempts**, Planner **MUST STEP IN**: Planner directly inspects target code and error logs (or deploys a surgical research pass), isolates the root cause, and records the architectural trap / quirk in `.worker.notes.md` and `docs/agents/granularity-profile.json`.
+  4. **Explicit User Mandate**: When user specifically requests *"fix/write this directly"* or *"look at this yourself"*.
 - **Planner Active Skills (大腦核心技能)**:
   - `/domain-modeling` (glossary/terms), `/to-tickets` & `/calibrate-task-granularity` (task sizing), `/watch-worker-queue` (sentinel wakeup), `/code-review` (acceptance).
   - *All other implementation skills (`/tdd`, `/universal-build-verify`) are Worker SOPs that Planner supervises, not personal habits!*
@@ -44,16 +46,15 @@ This repository operates on a **Physical Dual-Terminal Architecture** separating
 ┌────────────────────────────────────────────────────────────────────────┐
 │               Terminal A: Interactive Architect (In-Session)           │
 │  • Discuss architecture & requirements with user.                      │
-│  • [Track 1 Offload] Immediate dirty work / exploratory fact-finding   │
-│    is delegated to In-Session Subagents (auto-notified on completion). │
-│  • Decompose batch goals into single-line atomic English tasks.        │
+│  • Decompose goals/bugs into single-line atomic English contracts.     │
 │  • Writes tasks to tasks.txt and IMMEDIATELY yields control.           │
+│  • Deploys Queue Sentinel Subagent for zero-token batch wakeup.        │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │ (tasks.txt FIFO Queue)
 ┌───────────────────────────────────▼────────────────────────────────────┐
 │          Terminal B: Background Worker Terminal (Mounted Daemon)       │
 │  • User mounts and runs ./worker.sh in a separate terminal / tmux.     │
-│  • [Track 2 Offload] Unattended 24h batch execution & test suites.     │
+│  • Unattended 24h batch execution, TDD, diagnostics & test suites.     │
 │  • Pure zero-argument execution (auto-sources .worker.env).            │
 │  • Stateless CLI process (agy --model gemini-3.8-flash-low).           │
 │  • Follows .skills/universal-build-verify.md.                          │
@@ -63,15 +64,17 @@ This repository operates on a **Physical Dual-Terminal Architecture** separating
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Dual-Track Offloading Protocol (雙軌卸載協定):
-1. **Track 1: In-Session Immediate Offloading (即時探勘卸載)**:
-   - When Planner needs to explore hundreds of lines of code, analyze configs, or gather facts *during the ongoing conversation*, Planner invokes an in-session **Subagent** (`invoke_subagent`).
-   - The subagent digests the heavy content and returns a concise summary. The system automatically wakes Planner up upon completion (no `sleep` or polling needed).
-2. **Track 2: Cross-Terminal Batch Offloading & Sentinel Subagent Wakeup (跨終端批次與哨兵喚醒)**:
-   - When a plan or batch of features is ready, Planner queues tasks into `tasks.txt`.
-   - **Sentinel Subagent Wakeup**: If proactive completion notification is desired without freezing Terminal A, Planner launches a lightweight **Queue Sentinel Subagent** (`invoke_subagent` with `bash scripts/watch_worker.sh 3600`).
-   - Planner immediately yields control to Human. Terminal A remains 100% interactive.
-   - When Terminal B finishes all tasks, the Sentinel Subagent detects completion via zero-token script exit and triggers a **system wakeup event**, allowing Planner to deliver the final acceptance report automatically.
+### Tiered Offloading & Hot Preemption Protocol (分層卸載與高優先插隊協定):
+1. **Worker-First Exploration with Hot Preemption (探勘任務高優先插隊)**:
+   - When Planner needs codebase facts, bug reproduction, or API analysis, Planner creates `[DIAGNOSTIC]` or `[RESEARCH]` tasks.
+   - **Hot Preemption Priority**: These exploratory tasks have highest scheduling priority! Planner injects them to line 1 of `tasks.txt` (or via `scripts/reorder_queue.sh`). Worker preempts existing work and executes in `.worker-tree`, returning verified findings with zero token bloat in Terminal A.
+2. **Threshold Escalation to Planner (到達臨界 Planner 親自看)**:
+   - Worker gets 2-3 attempts to isolate the bug honestly under the Zero-Guessing Treaty.
+   - If Worker produces bogus/unverifiable reports, expresses lack of understanding (`[NEED_GUIDANCE]`), or exhausts retries without isolating root cause, **the threshold is reached**.
+   - **Planner Steps In**: Planner exercises sovereign rights to inspect target code and logs directly, resolve ambiguities, and record quirks in `.worker.notes.md`.
+3. **Sentinel Subagent & Interactive Passes**:
+   - The primary role of `invoke_subagent` in Terminal A is the **Queue Sentinel** (`scripts/watch_worker.sh 3600`) for zero-token batch wakeup.
+   - Subagents for fact-finding are only dispatched upon explicit Human mandate or when Planner acts during a post-threshold intervention.
 3. **Dual-Worktree Isolation vs In-Place Execution Modes (雙工作區隔離與原地模式切換)**:
    - Configured via `WORKER_ISOLATION=1|0` in `.worker.env` (minimal maintenance overhead):
    - **Mode 1: Dual-Worktree Isolation (`WORKER_ISOLATION=1`, Default)**:
@@ -110,17 +113,28 @@ To optimize token efficiency (50-70% savings) and ensure maximum instruction-fol
 
 Terminal A dynamically sizes tasks into `tasks.txt` based on `docs/agents/granularity-profile.json`:
 
-| Level | Granularity | Scope & Action |
-| :---: | :--- | :--- |
-| **Level 1** | **Coarse (Seam / Feature)** | Specify public interface & verification test. Worker autonomously creates internal helpers & implementation. |
-| **Level 2** | **Medium (Component Slice)** | Break down into discrete module units (e.g. data model vs processor). |
-| **Level 3** | **Micro (Step / Function)** | Precise function-level instructions. Used only when worker requested guidance or previous attempt struggled. |
+| Level | Granularity | Implementation Scope (`[CODE]`) | Diagnostic & Exploration Scope (`[DIAGNOSTIC]` / `[RESEARCH]`) |
+| :---: | :--- | :--- | :--- |
+| **Level 1** | **Coarse / Macro** | Feature seam: Specify public interface & test contract; Worker creates internal helpers. | **Project-Wide & Cross-Interface**: Trace end-to-end event loops, lifecycle hooks (sleep/wake), and cross-module pipelines. |
+| **Level 2** | **Medium / Meso** | Component slice: Break down into discrete module units (e.g. data model vs processor). | **Interface Boundary**: Trace contract compliance, parameter handoffs, and state synchronization between interacting layers. |
+| **Level 3** | **Micro** | Precise function: Surgical instructions for specific functions or algorithms. | **Function Deep Dive**: Inspect specific timing calculations, drift, race conditions, or localized error branches. |
 
 ### Task Format (Tracer-Bullet Schema):
 ```text
 TASK-XXX | LEVEL: 1 | AFTER: <task_id> | TARGET: <file_paths> | ACTION: <precise logic details> | VERIFY: <test command> | CONSTRAINTS: <scope limits>
 ```
 *(Note: `AFTER: <task_id>` is optional for expressing Task Graph DAG dependencies).*
+
+### Hierarchical Progressive Exploration Protocol (分層漸進式探勘決策協定):
+When addressing complex architectures or cross-cutting defects, Planner decomposes and decides **hierarchically from coarse to fine (由粗到細一階一階分配探勘)**:
+1. **Stage 1: Macro Topology Survey (`LEVEL: 1 [RESEARCH]` / `[DIAGNOSTIC]`)**:
+   - Worker explores project-wide event flow, lifecycle hooks, and pinpoints which decoupled subsystems are involved.
+2. **Stage 2: Meso Cross-Module Interface Trace (`LEVEL: 2 [DIAGNOSTIC]`)**:
+   - Worker examines the communication handoff between the interacting modules (e.g., View <-> ViewModel <-> Engine protocols, event subscriptions, state propagation).
+3. **Stage 3: Micro Function Deep-Dive (`LEVEL: 3 [DIAGNOSTIC]`)**:
+   - Worker isolates the exact internal function logic, timing drift, race condition, or math discrepancy.
+4. **Stage 4: Sound Architectural Decision & Code Allocation (`[CODE]`)**:
+   - Grounded in verified facts, Planner makes high-confidence architectural decisions and splits execution into atomic, single-seam implementation tickets.
 
 ---
 
@@ -135,9 +149,16 @@ TASK-XXX | LEVEL: 1 | AFTER: <task_id> | TARGET: <file_paths> | ACTION: <precise
    - If legacy code, undocumented interfaces, or obscure error logs are ambiguous, Worker **MUST NOT guess or invent intent**.
    - Output must clearly distinguish **Verified Facts** (exact code paths, verbatim command outputs) from **Hypotheses**.
    - **Verifiable Evidence Gate for Reports (報告驗證門檻 - 嚴禁通靈報告)**: A `[DIAGNOSTIC]` or `[RESEARCH]` task is invalid without concrete evidence (e.g., minimal failing test reproduction command, exact file/line numbers, or raw error logs). Mere textual speculation or vague claims without test evidence constitutes a task failure.
-3. **Single-Seam Freedom (接縫自由實作)**: As long as a task operates on a single architectural module/seam, there is **NO line-of-code limit**. Worker has full autonomy on internal helpers, data structures, and tests.
-4. **Cross-Subsystem Rejection (跨子系統過載拒絕)**: If a task demands simultaneous, uncoordinated changes across multiple decoupled subsystems (which belongs to Planner's domain), Worker emits `[NEED_DECOMPOSITION]` with proposed subtasks.
-5. **3-Tier Escalation, Granularity Ladder & Sovereign Intervention Protocol**:
+3. **Full-Spectrum Exploration Scope for Diagnostics (探勘全光譜：微觀函式至宏觀全專案跨介面)**:
+   - **Why Necessary**: Real-world bugs, performance leaks, and new capabilities often cut across interfaces (e.g. UI View ➔ ViewModel ➔ State ➔ AudioEngine ➔ OS Lifecycle). If diagnostic scope is artificially constrained to a single file, cross-interface defects can never be isolated or fixed!
+   - **Exemption from Single-Seam Constraint**: Unlike `[CODE]` tasks, `[DIAGNOSTIC]` and `[RESEARCH]` tasks are **exempt from single-seam restrictions** and possess full-spectrum exploration authority:
+     - **Macro (Project-Wide Flow)**: Trace end-to-end data pipelines, asynchronous event loops, system lifecycle notifications (e.g. sleep/wake), and cross-subsystem protocol boundaries.
+     - **Meso (Interface Contract / Seam)**: Verify parameter passing, type marshaling, and state synchronization between interacting components.
+     - **Micro (Function / Logic Branch)**: Deep dive into timer calculations, race conditions, memory leaks, and specific arithmetic branches.
+   - **Outcome**: The diagnostic report maps the entire cross-interface causal chain. Planner then uses this verified map to decompose subsequent `[CODE]` tasks into atomic, single-seam implementation tickets.
+4. **Single-Seam Freedom for Implementation (代碼實作接縫自由)**: For `[CODE]` tasks, as long as the modification operates on a single architectural module/seam, there is **NO line-of-code limit**. Worker has full autonomy on internal helpers, data structures, and tests.
+5. **Cross-Subsystem Rejection for Code Modifications (代碼實作之跨子系統拒絕)**: If a `[CODE]` task demands simultaneous, uncoordinated implementation changes across multiple decoupled subsystems, Worker emits `[NEED_DECOMPOSITION]` with proposed subtasks. *(Note: This restriction applies to code modification only; diagnostic exploration has full cross-interface permission).*
+6. **3-Tier Escalation, Granularity Ladder & Sovereign Intervention Protocol**:
    - *Tier 1 (Local choices)*: Worker decides autonomously.
    - *Tier 2 (Recoverable errors)*: Worker self-heals within 3 retries (with `git restore` clean intermediate resets).
    - *Tier 3 (Fatal blockers & Granularity Escalation)*:

@@ -28,9 +28,10 @@ The framework physically separates interactive architectural reasoning from unat
 ┌────────────────────────────────────────────────────────────────────────┐
 │               Terminal A: Interactive Architect (In-Session)           │
 │  • Discuss architecture & requirements with user in Chinese/English.   │
-│  • Offload 1: Delegate heavy exploration to In-Session Subagents.      │
-│  • Decompose goals into single-line atomic English contracts.          │
+│  • Hot Preemption: Offload diagnostics to Worker with line 1 priority. │
+│  • Decompose goals/bugs into single-line atomic English contracts.     │
 │  • Writes tasks to tasks.txt and yields control immediately.           │
+│  • Sentinel Subagent deployed for zero-token batch wakeup.             │
 │  • Guides user with project-native preview commands for .preview/.     │
 │  • Automatically merges feature/worker-frontier upon batch completion. │
 └───────────────────────────────────┬────────────────────────────────────┘
@@ -117,10 +118,16 @@ When all tasks in `tasks.txt` are completed:
 TASK-XXX | LEVEL: 1 | AFTER: <task_id> | TARGET: <file_paths> | ACTION: <concrete logic> | VERIFY: <test command> | CONSTRAINTS: <bounds>
 ```
 
-### 5.2 Dynamic Granularity Levels
-- **Level 1 (Coarse / Feature Seam)**: Defines public interface, verification test, and constraints. Worker has full autonomy on internal data structures and helpers.
-- **Level 2 (Medium / Component Slice)**: Decomposes into distinct modules (e.g. data schema vs engine).
-- **Level 3 (Micro / Step)**: Precise function-level instructions used when worker requested guidance or previous attempts struggled.
+### 5.2 Dynamic Granularity Levels (Implementation & Exploration)
+- **Level 1 (Coarse / Macro)**:
+  - *Implementation*: Defines public interface, verification test, and constraints. Worker has full autonomy on internal data structures and helpers.
+  - *Exploration (`[DIAGNOSTIC]` / `[RESEARCH]`)*: Full-spectrum project-wide cross-interface trace (e.g. UI ➔ ViewModel ➔ Engine ➔ OS lifecycle).
+- **Level 2 (Medium / Meso)**:
+  - *Implementation*: Decomposes into distinct modules (e.g. data schema vs engine).
+  - *Exploration*: Interface contract and state synchronization trace between interacting services.
+- **Level 3 (Micro / Step)**:
+  - *Implementation*: Precise function-level instructions used when worker requested guidance or previous attempts struggled.
+  - *Exploration*: Function deep dive into specific timing calculations, drift, race conditions, or localized error branches.
 
 ### 5.3 Granularity Escalation Ladder & Level 3 Sovereign Intervention
 1. **Escalation on Failure**: When a task blocks (`[BLOCKED]`):
@@ -134,6 +141,13 @@ TASK-XXX | LEVEL: 1 | AFTER: <task_id> | TARGET: <file_paths> | ACTION: <concret
      - `docs/agents/granularity-profile.json` (subsystem score & notes)
      - `.worker.notes.md` (compiler traps / repo quirks discovered)
    - Permanently enhances future task allocation efficiency.
+
+### 5.4 Hierarchical Progressive Exploration Protocol
+For complex cross-module features and defects, Planner grooms and decides progressively from coarse to fine:
+1. **Stage 1 (Macro Survey)**: Issue `LEVEL: 1 [RESEARCH]` / `[DIAGNOSTIC]` to map affected subsystems and lifecycle pipelines.
+2. **Stage 2 (Meso Contract Trace)**: Issue `LEVEL: 2 [DIAGNOSTIC]` to examine inter-module communication protocols, event propagation, and contract breakages.
+3. **Stage 3 (Micro Deep-Dive)**: Issue `LEVEL: 3 [DIAGNOSTIC]` to isolate internal calculations, race conditions, or timing drift.
+4. **Stage 4 (Sound Architectural Decision)**: Armed with verified facts, Planner makes high-confidence decisions and allocates decoupled, single-seam `[CODE]` tickets.
 
 ---
 
